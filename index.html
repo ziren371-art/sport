@@ -596,71 +596,285 @@ function textOf(el, names){
   return null;
 }
 
-async function parseRunFile(file){
-  const raw = await file.text();
-  const doc = new DOMParser().parseFromString(raw, 'text/xml');
-  if(doc.getElementsByTagName('parsererror').length) {
-    throw new Error(/\.fit$/i.test(file.name) ? '不支持 FIT，请改导 TCX/GPX' : '文件不是有效的 XML');
+async function readTextSmart(file){
+  const buf = await file.arrayBuffer();
+  try{ return new TextDecoder('utf-8', {fatal:true}).decode(buf); }
+  catch(e){
+    try{ return new TextDecoder('gb18030').decode(buf); }
+    catch(e2){ return new TextDecoder('utf-8').decode(buf); }
   }
-  const all = doc.getElementsByTagName('*');
+}
+function laters(el, name){
+  const out = [];
+  const all = el.getElementsByTagName('*');
+  for(let i=0;i<all.length;i++) if(all[i].localName===name) out.push(all[i]);
+  return out;
+}
+function numOf(el, names){
+  for(const n of names){
+    const list = laters(el, n);
+    if(list.length){ const v = parseFloat(list[0].textContent); if(!isNaN(v)) return v; }
+  }
+  return null;
+}
+function hav(lat1, lon1, lat2, lon2){
+  const R=6371000, p1=lat1*Math.PI/180, p2=lat2*Math.PI/180;
+  const dp=p2-p1, dl=(lon2-lon1)*Math.PI/180;
+  const a=Math.sin(dp/2)**2 + Math.cos(p1)*Math.cos(p2)*Math.sin(dl/2)**2;
+  return 2*R*Math.asin(Math.sqrt(a));
+}
+function trackDistance(samples, stepS){
+  stepS = stepS || 3;
+  const pts = samples.filter(s=>s.lat!=null && s.lon!=null);
+  if(pts.length<2) return 0;
+  let total=0, last=pts[0];
+  for(let i=1;i<pts.length;i++){
+    const p=pts[i], d=hav(last.lat,last.lon,p.lat,p.lon), dtt=p.t-last.t;
+    if(dtt<=0 || (dtt>0 && d/dtt>12)){ last=p; continue; }
+    if(p.t-last.t>=stepS){ total+=d; last=p; }
+  }
+  return total;
+}
+
+function parseTCX(doc){
+  const acts = laters(doc, 'Activity');
+  if(!acts.length) throw new Error('TCX 里没有 Activity 节点');
+  const sport = acts[0].getAttribute('Sport') || 'Running';
+  const samples=[], laps=[];
+  for(const lap of laters(acts[0], 'Lap')){
+    const dur = numOf(lap, ['TotalTimeSeconds']);
+    const dist = numOf(lap, ['DistanceMeters']);
+    if(dur || dist){
+      const avgEl = laters(lap, 'AverageHeartRateBpm')[0];
+      const maxEl = laters(lap, 'MaximumHeartRateBpm')[0];
+      laps.push({dur:dur, dist:dist, hr: avgEl?numOf(avgEl,['Value']):null, maxhr: maxEl?numOf(maxEl,['Value']):null});
+    }
+    for(const tp of laters(lap, 'Trackpoint')){
+      const tn = laters(tp, 'Time')[0];
+      if(!tn) continue;
+      const tt = Date.parse(tn.textContent)/1000;
+      if(isNaN(tt)) continue;
+      const hrEl = laters(tp,'HeartRateBpm')[0];
+      const posEl = laters(tp,'Position')[0];
+      samples.push({
+        t: tt,
+        hr: hrEl ? numOf(hrEl,['Value']) : null,
+        dist: numOf(tp,['DistanceMeters']),
+        spd: numOf(tp,['Speed']),
+        cad: fixCad(numOf(tp,['Cadence','RunCadence'])),
+        lat: posEl ? numOf(posEl,['LatitudeDegrees']) : null,
+        lon: posEl ? numOf(posEl,['LongitudeDegrees']) : null
+      });
+    }
+  }
+  return buildRun(samples, laps, sport, 'tcx');
+}
+
+function parseGPX(doc){
   const pts = [];
+  const all = doc.getElementsByTagName('*');
   for(let i=0;i<all.length;i++){
     const ln = all[i].localName;
-    if(ln==='Trackpoint' || ln==='trkpt') pts.push(all[i]);
+    if(ln==='trkpt'||ln==='rtept'||ln==='wpt') pts.push(all[i]);
   }
-  if(!pts.length) throw new Error('文件里没有轨迹点（可能是室内跑或只导出了圈数据）');
-
-  const samples = [];
+  const samples=[];
   for(const p of pts){
-    const tnode = p.getElementsByTagName('*');
-    let time=null, hr=null, dist=null, cad=null;
-    for(let i=0;i<tnode.length;i++){
-      const e = tnode[i], ln = e.localName, v = e.textContent.trim();
-      if(ln==='Time' && !time) time = Date.parse(v)/1000;
-      else if((ln==='hr'||ln==='heartrate'||ln==='Value') && !hr && /^\d+$/.test(v)) hr = parseFloat(v);
-      else if(ln==='DistanceMeters' && !dist && v) dist = parseFloat(v);
-      else if((ln==='Cadence'||ln==='RunCadence'||ln==='cad') && !cad && v) cad = parseFloat(v);
-    }
-    if(time && !isNaN(time)) samples.push({t:time, hr:hr, dist:dist, cad:fixCad(cad)});
+    const tn = laters(p,'time')[0];
+    if(!tn) continue;
+    const tt = Date.parse(tn.textContent)/1000;
+    if(isNaN(tt)) continue;
+    samples.push({
+      t: tt,
+      hr: numOf(p,['hr','heartrate']),
+      dist: null,
+      spd: numOf(p,['speed']),
+      cad: fixCad(numOf(p,['cad','cadence'])),
+      lat: p.getAttribute('lat')!=null ? parseFloat(p.getAttribute('lat')) : null,
+      lon: p.getAttribute('lon')!=null ? parseFloat(p.getAttribute('lon')) : null
+    });
   }
-  samples.sort((a,b)=>a.t-b.t);
-  if(samples.length<2) throw new Error('轨迹点太少，无法统计');
+  return buildRun(samples, [], 'Running', 'gpx');
+}
 
-  const t0=samples[0].t, t1=samples[samples.length-1].t;
+const FIT_EPOCH = 631065600;   // 1989-12-31T00:00:00Z
+const FIT_SIZE = {0:1,1:1,2:1,0x83:2,0x84:2,0x85:4,0x86:4,7:1,0x88:4,0x89:8,0x0A:1,0x8B:2,0x8C:4,0x0D:1,0x8E:8,0x8F:8,0x90:8};
+function fitValue(dv, off, type, le){
+  try{
+    switch(type){
+      case 0x83: return dv.getInt16(off, le);
+      case 0x84: return dv.getUint16(off, le);
+      case 0x85: return dv.getInt32(off, le);
+      case 0x86: case 0x8C: case 0x90: return dv.getUint32(off, le);
+      case 0x88: return dv.getFloat32(off, le);
+      case 0x89: return dv.getFloat64(off, le);
+      case 0x8E: return Number(dv.getBigInt64(off, le));
+      case 0x8F: return Number(dv.getBigUint64(off, le));
+      default: return dv.getUint8(off);
+    }
+  }catch(e){ return null; }
+}
+
+function parseFIT(buf){
+  const dv = new DataView(buf);
+  if(buf.byteLength < 14) throw new Error('FIT 文件太短');
+  let magic=''; for(let i=8;i<12;i++) magic += String.fromCharCode(dv.getUint8(i));
+  if(magic!=='.FIT') throw new Error('不是有效的 FIT 文件');
+  const hdr = dv.getUint8(0);
+  const dsize = dv.getUint32(4, true);
+  let i = hdr;
+  const endPos = hdr + dsize;
+  const defs = {};
+  const samples = [];
+  let sess = null;
+  while(i < endPos){
+    const b = dv.getUint8(i);
+    if(b & 0x80){                       // 压缩时间戳
+      const local = (b>>5) & 0x03;
+      i++;
+      const def = defs[local];
+      if(!def) break;
+      const vals = readFields(dv, i, def, true);
+      i = vals.next;
+      samples.push(toSample(vals.map, true, null));
+    } else if(b & 0x40){                // 定义消息
+      const local = b & 0x0F;
+      i += 2;                            // header + reserved
+      const arch = dv.getUint8(i); i++;
+      const le = arch === 0;
+      const gnum = dv.getUint16(i, le); i += 2;
+      const n = dv.getUint8(i); i++;
+      const fields = [];
+      for(let k=0;k<n;k++){
+        fields.push({num: dv.getUint8(i), size: dv.getUint8(i+1), type: dv.getUint8(i+2)});
+        i += 3;
+      }
+      if(b & 0x20){ const nd = dv.getUint8(i); i += 1 + nd*3; }
+      defs[local] = {gnum:gnum, fields:fields, le:le};
+    } else {                             // 数据消息
+      const local = b & 0x0F;
+      i++;
+      const def = defs[local];
+      if(!def) break;
+      const vals = readFields(dv, i, def, false);
+      i = vals.next;
+      if(def.gnum===20){ samples.push(toSample(vals.map, false, null)); }
+      else if(def.gnum===18){
+        sess = {
+          dur: vals.map[7]!=null ? vals.map[7]/1000 : null,
+          dist: vals.map[9]!=null ? vals.map[9]/100 : null,
+          hr: vals.map[16], maxhr: vals.map[17], cad: vals.map[18]
+        };
+      }
+    }
+  }
+  const laps = sess ? [{dur:sess.dur, dist:sess.dist, hr:sess.hr, maxhr:sess.maxhr}] : [];
+  return buildRun(samples, laps, 'Running', 'fit');
+}
+function readFields(dv, i, def, compressed){
+  const map = {};
+  for(const f of def.fields){
+    map[f.num] = f.type===7 ? null : fitValue(dv, i, f.type, def.le);
+    i += f.size;
+  }
+  return {map: map, next: i};
+}
+function toSample(m, compressed, _){
+  const ts = m[253];
+  if(ts==null) return null;
+  return {
+    t: FIT_EPOCH + ts,
+    hr: m[3]!=null ? m[3] : null,
+    dist: m[5]!=null ? m[5]/100 : null,
+    spd: (m[73]!=null ? m[73]/1000 : (m[6]!=null ? m[6]/1000 : null)),
+    cad: fixCad(m[4]),
+    lat: m[0]!=null ? m[0]/11930465 : null,
+    lon: m[1]!=null ? m[1]/11930465 : null
+  };
+}
+
+function buildRun(samples, laps, sport, source){
+  samples = samples.filter(Boolean).sort((a,b)=>a.t-b.t);
+  laps = (laps||[]).filter(l=>l && (l.dur || l.dist));
+  const lapDur = laps.reduce((a,b)=>a+(b.dur||0),0) || null;
+  const lapDist = laps.reduce((a,b)=>a+(b.dist||0),0) || null;
+  if(!samples.length){
+    if(!laps.length) throw new Error('文件里既没有轨迹点也没有圈数据');
+    return {id:'', date:'', time:'', week:null, planned:null, title:'未排课',
+      dist: (lapDist||0)/1000, dur: Math.round(lapDur||0), pace:null,
+      avgHr: laps[0].hr, maxHr: laps[0].maxhr, cad: null, zs:{}, estimated:true};
+  }
+  const t0 = samples[0].t, t1 = samples[samples.length-1].t;
   const dists = samples.map(s=>s.dist).filter(v=>v!=null);
-  const distM = dists.length>1 && dists[dists.length-1]>dists[0] ? dists[dists.length-1]-dists[0] : 0;
+  let distM = 0;
+  if(dists.length>1 && dists[dists.length-1]>dists[0]) distM = dists[dists.length-1]-dists[0];
+  else if(lapDist) distM = lapDist;
+  let estimated = false;
+  if(!distM){ distM = trackDistance(samples); estimated = distM>0; }
+  const dur = lapDur || (t1-t0);
   const hrs = samples.map(s=>s.hr).filter(v=>v!=null);
   const cads = samples.map(s=>s.cad).filter(v=>v!=null);
   const start = new Date(t0*1000);
   const pad2 = n => (n<10?'0':'')+n;
+  return {
+    samples: samples,
+    start: start,
+    dur: Math.round(dur),
+    elapsed: Math.round(t1-t0),
+    dist: distM/1000,
+    avgHr: hrs.length ? Math.round(hrs.reduce((a,b)=>a+b,0)/hrs.length) : null,
+    maxHr: hrs.length ? Math.round(Math.max.apply(null,hrs)) : null,
+    cad: cads.length ? Math.round(cads.reduce((a,b)=>a+b,0)/cads.length) : null,
+    estimated: estimated,
+    source: source, sport: sport
+  };
+}
+
+async function parseRunFile(file){
+  const name = (file.name||'').toLowerCase();
+  let raw;
+  if(name.endsWith('.fit')){
+    raw = await file.arrayBuffer();
+    var base = parseFIT(raw);
+  } else {
+    const text = await readTextSmart(file);
+    const doc = new DOMParser().parseFromString(text, 'text/xml');
+    if(doc.getElementsByTagName('parsererror').length) throw new Error('文件不是有效的 XML');
+    var base = name.endsWith('.gpx') ? parseGPX(doc) : parseTCX(doc);
+  }
+  const samples = base.samples || [];
+  if(base.samples) delete base.samples;
+
+  const start = base.start || new Date();
+  const pad2 = n => (n<10?'0':'')+n;
   const date = start.getFullYear()+'-'+pad2(start.getMonth()+1)+'-'+pad2(start.getDate());
   const hhmm = pad2(start.getHours())+':'+pad2(start.getMinutes());
-
   const day = dayByDate(date);
   const wk = day ? day.week : null;
   const planned = day ? day.zone : null;
   const stage = wk ? stageOfWeek(wk) : 3;
 
   const zs = {};
+  let lastKnown = null;
   for(let i=0;i<samples.length-1;i++){
     const a=samples[i], b=samples[i+1], dtt=b.t-a.t;
     if(dtt<=0 || dtt>60) continue;
     let pace=null;
-    if(a.dist!=null && b.dist!=null && b.dist-a.dist>0.3) pace = dtt/((b.dist-a.dist)/1000);
-    const z = zoneOf(a.hr, pace, planned, stage);
+    if(a.spd) pace = 1000/a.spd;
+    else if(a.dist!=null && b.dist!=null && b.dist-a.dist>0.3) pace = dtt/((b.dist-a.dist)/1000);
+    let z = zoneOf(a.hr, pace, planned, stage);
+    if(z==='unknown'){ if(lastKnown==null) continue; z = lastKnown; } else lastKnown = z;
     zs[z] = (zs[z]||0) + dtt;
   }
   return {
-    id: (file.name+'|'+date+'|'+Math.round(distM)),
-    date: date, time: hhmm,
-    week: wk, planned: planned,
+    id: (file.name+'|'+date+'|'+Math.round(base.dist*1000)),
+    date: date, time: hhmm, week: wk, planned: planned,
     title: day ? day.title : '未排课',
-    dist: Math.round(distM/10)/100,
-    dur: Math.round(t1-t0),
-    pace: distM>50 ? Math.round((t1-t0)/(distM/1000)) : null,
-    avgHr: hrs.length ? Math.round(hrs.reduce((x,y)=>x+y,0)/hrs.length) : null,
-    maxHr: hrs.length ? Math.round(Math.max.apply(null,hrs)) : null,
-    cad: cads.length ? Math.round(cads.reduce((x,y)=>x+y,0)/cads.length) : null,
+    dist: Math.round(base.dist*1000)/1000,
+    dur: base.dur,
+    pace: base.dist>0.05 ? Math.round(base.dur/base.dist) : null,
+    avgHr: base.avgHr, maxHr: base.maxHr, cad: base.cad,
+    estimated: !!base.estimated,
+    source: base.source,
     zs: zs
   };
 }
@@ -721,8 +935,8 @@ function viewData(){
     <div class="row"><div class="sp"><b>导入跑步记录</b>
       <div class="tiny" style="margin-top:3px">Zepp：运动记录 → 某次跑步 → 分享 → 导出 → TCX</div></div>
       <button class="btn sm primary" data-act="importRuns">选择文件</button></div>
-    <div class="tiny" style="margin-top:8px">支持 .tcx / .gpx，可一次多选；按日期+距离自动去重</div>
-    <input type="file" id="fileRuns" accept=".tcx,.gpx,.xml" multiple class="hide">
+    <div class="tiny" style="margin-top:8px">支持 .tcx / .gpx / .fit，可一次多选；按日期+距离自动去重</div>
+    <input type="file" id="fileRuns" accept=".tcx,.gpx,.fit,.xml" multiple class="hide">
   </div>`;
 
   if(!runs.length){
