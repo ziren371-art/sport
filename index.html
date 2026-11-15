@@ -180,7 +180,8 @@ const DAYS = PLAN.weeks.flatMap(w => w.days);
 const ZC = {E:'#5c7a5e',M:'#6b7f9e',T:'#b87320',GP:'#c96442',I:'#7d6487',ST:'#7d8f8a'};
 const ZNAME = {E:'E 区',M:'M 区',T:'T 区',GP:'GP',I:'I 区',ST:'ST'};
 const LS = 'runkit.v1';
-const DEF = {tab:'today', city:null, weather:true, hrvBase:97, rhrBase:55, checks:{}, daily:{}, seen:{}, runs:[] };
+const DEF = {tab:'today', city:null, weather:true, hrvBase:97, rhrBase:55, checks:{}, daily:{}, seen:{}, runs:[],
+  profile:{sex:'male', age:22, height:167, weight:50, rhr:55, hrmax:193} };
 
 let S = load();
 let cache = { weather:null, at:0, dayKey:null };
@@ -531,8 +532,11 @@ function viewLog(){
 }
 
 /* ---------- 设置 ---------- */
+function estHrMax(age){ return Math.round(208 - 0.7 * (age || 22)); }
+
 function viewSet(){
   const c = S.city || {};
+  const prof = S.profile || {};
   return `<div class="top"><div><div class="d1">设置</div><div class="d2">数据只存在这台设备</div></div></div>
     <div class="card">
       <b>城市（用于天气）</b>
@@ -546,13 +550,27 @@ function viewSet(){
         <button class="btn sm ${S.weather?'on':''}" data-act="toggleWx">${S.weather?'已开':'已关'}</button></div>
     </div>
     <div class="card">
-      <b>个人基线</b>
-      <div class="grid2" style="margin-top:8px">
-        <div><label class="f">HRV 基线（ms）</label><input type="number" id="inHrvBase" value="${S.hrvBase}"></div>
-        <div><label class="f">静息心率（次/分）</label><input type="number" id="inRhrBase" value="${S.rhrBase}"></div>
+      <b>个人资料</b>
+      <div class="tiny" style="margin:4px 0 10px">只影响分析与负荷计算，<b>不会改动 12 周课表</b>；课表的绝对心率与配速仍以 PDF 为准。</div>
+      <div class="grid2">
+        <div><label class="f">性别（影响 TRIMP 系数）</label>
+          <div class="seg" id="segSex">
+            <button data-act="sex" data-v="male" class="${prof.sex==='male'?'on':''}">男</button>
+            <button data-act="sex" data-v="female" class="${prof.sex==='female'?'on':''}">女</button>
+          </div></div>
+        <div><label class="f">年龄</label><input type="number" id="pAge" value="${prof.age}"></div>
+        <div><label class="f">身高（cm）</label><input type="number" id="pHeight" value="${prof.height}"></div>
+        <div><label class="f">体重（kg）</label><input type="number" step="0.1" id="pWeight" value="${prof.weight}"></div>
+        <div><label class="f">静息心率</label><input type="number" id="pRhr" value="${prof.rhr}"></div>
+        <div><label class="f">最大心率</label><input type="number" id="pHrmax" value="${prof.hrmax}"></div>
+        <div><label class="f">HRV 基线（ms）</label><input type="number" id="pHrv" value="${S.hrvBase}"></div>
+        <div><label class="f">估算最大心率</label>
+          <div class="kv" style="padding:8px 10px"><div class="v" style="font-size:15px">${estHrMax(prof.age)}</div></div></div>
       </div>
-      <div class="row" style="margin-top:9px"><div class="sp"></div><button class="btn sm" data-act="saveBase">保存</button></div>
-      <div class="tiny" style="margin-top:7px">黄灯：低于基线 15% 或静息 ≥60 → 降为 E 区；红灯：低于 1.5 个标准差（约 97→78）→ 停 48 小时</div>
+      <div class="row" style="margin-top:10px"><div class="sp"></div>
+        <button class="btn sm" data-act="saveProfile">保存资料</button></div>
+      <div class="tiny" style="margin-top:8px">TRIMP = Σ dt × ${prof.sex==='female'?'0.86':'0.64'} × e^(${prof.sex==='female'?'1.67':'1.92'}×HRr)，HRr=(${prof.hrmax==null?'—':'HR'}−${prof.rhr})/(${prof.hrmax}−${prof.rhr})</div>
+      <div class="tiny" style="margin-top:6px">黄灯：HRV 低于基线 15% 或静息 ≥60 → 降为 E 区；红灯：低于 1.5 个标准差 → 停 48 小时</div>
     </div>
     <div class="card">
       <b>备份</b>
@@ -874,6 +892,7 @@ async function parseRunFile(file){
   const stage = wk ? stageOfWeek(wk) : 3;
 
   const zs = {};
+  const hist = {};
   let lastKnown = null;
   for(let i=0;i<samples.length-1;i++){
     const a=samples[i], b=samples[i+1], dtt=b.t-a.t;
@@ -884,6 +903,7 @@ async function parseRunFile(file){
     let z = zoneOf(a.hr, pace, planned, stage);
     if(z==='unknown'){ if(lastKnown==null) continue; z = lastKnown; } else lastKnown = z;
     zs[z] = (zs[z]||0) + dtt;
+    if(a.hr){ const k = Math.round(a.hr); hist[k] = (hist[k]||0) + dtt; }
   }
   return {
     id: (file.name+'|'+date+'|'+Math.round(base.dist*1000)),
@@ -895,8 +915,27 @@ async function parseRunFile(file){
     avgHr: base.avgHr, maxHr: base.maxHr, cad: base.cad,
     estimated: !!base.estimated,
     source: base.source,
+    hrHist: hist,
+    trimp: calcTrimp(hist, S.profile),
     zs: zs
   };
+}
+
+function calcTrimp(hist, prof){
+  if(!hist) return null;
+  const p = prof || S.profile || {};
+  const rhr = p.rhr || 55, hrmax = p.hrmax || 193;
+  const a = (p.sex === 'female') ? 0.86 : 0.64;
+  const b = (p.sex === 'female') ? 1.67 : 1.92;
+  let sum = 0;
+  Object.keys(hist).forEach(k => {
+    const hr = parseInt(k, 10), sec = hist[k];
+    if(!(hr >= 30 && hr <= 235)) return;
+    let hrr = (hr - rhr) / Math.max(1, hrmax - rhr);
+    hrr = Math.max(0, Math.min(1, hrr));
+    sum += sec * a * Math.exp(b * hrr);
+  });
+  return Math.round(sum / 60);
 }
 
 function zTotals(runs){
@@ -975,6 +1014,10 @@ function viewData(){
       ${statBox('里程', km.toFixed(1)+' km')}
       ${statBox('时长', mins(dur)+' 分')}
       ${statBox('均步频', list.length? Math.round(list.filter(r=>r.cad).reduce((a,b)=>a+b.cad,0)/Math.max(1,list.filter(r=>r.cad).length)) : '—')}
+    </div>
+    <div class="grid2" style="margin-top:9px">
+      ${statBox('训练负荷', (list.reduce((a,b)=>a+(b.trimp||0),0))+' TRIMP')}
+      ${statBox('平均心率', list.length? Math.round(list.filter(r=>r.avgHr).reduce((a,b)=>a+b.avgHr,0)/Math.max(1,list.filter(r=>r.avgHr).length)) : '—')}
     </div>
     <div style="margin-top:12px">${zoneBar(tot)}</div>
   </div>`;
@@ -1162,6 +1205,26 @@ document.addEventListener('click', async (e)=>{
     save(); render(); return;
   }
   if(act==='toggleWx'){ S.weather = !S.weather; save(); render(); if(S.weather) maybeWeather(); return; }
+  if(act==='sex'){
+    S.profile = Object.assign({}, S.profile, {sex: btn.dataset.v});
+    save(); render(); return;
+  }
+  if(act==='saveProfile'){
+    const g = id => { const v = parseFloat(document.getElementById(id).value); return isNaN(v) ? null : v; };
+    const p = Object.assign({}, S.profile, {
+      age: g('pAge'), height: g('pHeight'), weight: g('pWeight'),
+      rhr: g('pRhr'), hrmax: g('pHrmax')
+    });
+    const hrv = g('pHrv');
+    if(hrv && hrv > 20) S.hrvBase = Math.round(hrv);
+    if(p.rhr && p.rhr > 30) S.rhrBase = Math.round(p.rhr);
+    if(p.hrmax == null || p.hrmax < 120) p.hrmax = estHrMax(p.age);
+    S.profile = p;
+    save();
+    // 已有的跑记录按新参数重算负荷
+    (S.runs||[]).forEach(r => { r.trimp = calcTrimp(r.hrHist, p); });
+    render(); return;
+  }
   if(act==='saveBase'){
     const a = parseInt(document.getElementById('inHrvBase').value,10);
     const b = parseInt(document.getElementById('inRhrBase').value,10);
@@ -1257,7 +1320,7 @@ function showRun(id){
     '<div class="stats">'+statBox('距离', r.dist.toFixed(2)+' km')+statBox('时长', Math.round(r.dur/60)+' 分')+
     statBox('均心率', r.avgHr||'—')+statBox('配速', r.pace?mmssJS(r.pace)+' /km':'—')+'</div></div>'+
     '<b>区间分布</b><ul class="tips">'+(lines||'<li>无心率数据</li>')+'</ul>'+
-    '<div class="row" style="margin-top:14px"><div class="sp tiny">步频 '+(r.cad||'—')+' · 最大心率 '+(r.maxHr||'—')+'</div>'+
+    '<div class="row" style="margin-top:14px"><div class="sp tiny">步频 '+(r.cad||'—')+' · 最大心率 '+(r.maxHr||'—')+' · 负荷 '+(r.trimp==null?'—':r.trimp+' TRIMP')+'</div>'+
     '<button class="btn sm primary" data-act="closesheet">关闭</button></div>');
 }
 
