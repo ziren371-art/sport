@@ -53,15 +53,19 @@
     index.html             86 KB，含 84 天课表
     manifest.webmanifest   添加到主屏幕用
     sw.js                  离线缓存（需 https）
-  跑步App-发布.zip          ← 拖去 Netlify 的那个包
+  跑步App-发布.zip          ← 离线分发包（拖去 Netlify 也行）
   src/
     plan.json              ← 课表源数据（改课程改这里）
     app.template.html      ← 界面模板
   scripts/
-    gen_plan.py            从 PDF 规格重新生成 plan.json（含跑量校验）
+    gen_plan.py            从 PDF 规格重新生成 plan.json（含跑量硬校验）
     build.py               plan.json + 模板 → dist/index.html
     make_check_table.py    生成校对表.md
+    extract_pdf_text.py    从 PDF 抽取文本（PDF 更新后用）
+    deploy_github.py       上传 dist 到 GitHub Pages（走 API，不用装 git）
     test.mjs               48 项自动测试（日期/闸门/天气/渲染）
+  截图/                     界面截图
+  _extract/                 PDF 抽取出来的文本（核对原始依据用）
   校对表.md                 ← 先用它核一遍数字
 ```
 
