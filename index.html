@@ -430,6 +430,12 @@ function checkinCard(day){
       <button data-act="ck" data-s="downgrade" class="${c.status==='downgrade'?'on':''}">降级完成</button>
       <button data-act="ck" data-s="skip" class="${c.status==='skip'?'on':''}">跳过</button>
     </div>
+    ${day.strength?`<div class="row" style="margin-top:10px;gap:8px">
+      <button class="btn sm ${c.strength?'on':''}" data-act="strCheck" data-v="${c.strength?'0':'1'}">
+        ${c.strength?'\u2713 力量 '+day.strength+' 已完成':'\u25a1 力量 '+day.strength+' 未完成 · 点此勾选'}</button>
+      <div class="sp"></div>
+      <span class="tiny">${PLAN.strengths[day.strength].minutes} 分钟</span>
+    </div>`:''}
     ${done?`<div class="feel" id="segFeel">
       ${[1,2,3,4,5].map(i=>`<button data-act="feel" data-f="${i}" class="${c.feel===i?'on':''}">${['很轻松','轻松','正常','偏累','很累'][i-1]}</button>`).join('')}
     </div>
@@ -515,7 +521,7 @@ function viewLog(){
       return `<div class="card tight" data-act="day" data-date="${d.date}">
         <div class="row"><div class="dot" style="background:${zoneColor(d.zone)}"></div>
           <div class="sp"><div class="nm">${esc(d.title)}</div>
-          <div class="ds">W${d.week} · ${d.dateLabel} ${d.dowName}${d.km?' · '+f1(d.km)+' km':''}${c.feel?' · '+['很轻松','轻松','正常','偏累','很累'][c.feel-1]:''}</div></div>
+          <div class="ds">W${d.week} · ${d.dateLabel} ${d.dowName}${d.km?' · '+f1(d.km)+' km':''}${d.strength?(c.strength?' · 力量'+d.strength+' ✓':' · 力量'+d.strength+' 未勾'):''}${c.feel?' · '+['很轻松','轻松','正常','偏累','很累'][c.feel-1]:''}</div></div>
           <span class="badge ${badge}">${label}</span></div>
         ${c.note?`<div class="tiny" style="margin-top:6px">${esc(c.note)}</div>`:''}
       </div>`;
@@ -550,7 +556,8 @@ function viewSet(){
     </div>
     <div class="card">
       <b>备份</b>
-      <div class="row" style="margin-top:8px;gap:7px">
+      <div class="tiny" style="margin:2px 0 8px">导出后丢进电脑的 <b>跑步数据\导入\</b>，周报就会把力量完成情况算进达标项</div>
+      <div class="row" style="gap:7px">
         <button class="btn sm" data-act="export">导出 JSON</button>
         <button class="btn sm" data-act="import">导入</button>
         <div class="sp"></div>
@@ -1134,6 +1141,13 @@ document.addEventListener('click', async (e)=>{
     const d = dayByDate(t) || dayByDate(DAYS[0].date);
     const status = btn.dataset.s;
     S.checks[d.date] = Object.assign({note:'',feel:null}, S.checks[d.date]||{}, {status});
+    save(); render(); return;
+  }
+  if(act==='strCheck'){
+    const d = dayByDate(t);
+    if(!d) return;
+    const v = btn.dataset.v === '1';
+    S.checks[d.date] = Object.assign({}, S.checks[d.date] || {}, {strength: v});
     save(); render(); return;
   }
   if(act==='feel'){
