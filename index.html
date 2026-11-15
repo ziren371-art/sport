@@ -1,0 +1,736 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0b0e14">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="12周跑步">
+<title>12周跑步 · 今日课表</title>
+<style>
+:root{
+  --bg:#0b0e14; --card:#141922; --card2:#1a212c; --line:#232c3a;
+  --tx:#e8edf5; --tx2:#9aa7ba; --tx3:#64748b;
+  --E:#34d399; --M:#60a5fa; --T:#fbbf24; --GP:#f87171; --I:#a78bfa; --REST:#64748b;
+  --ok:#34d399; --warn:#fbbf24; --bad:#f87171; --acc:#60a5fa;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0;background:var(--bg);color:var(--tx);
+  font-family:system-ui,-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;
+  font-size:15px;line-height:1.55;-webkit-font-smoothing:antialiased}
+body{padding-bottom:calc(74px + env(safe-area-inset-bottom))}
+.app{max-width:560px;margin:0 auto;padding:14px 14px 8px}
+h1,h2,h3{margin:0;font-weight:700}
+.muted{color:var(--tx2)}
+.tiny{font-size:12.5px;color:var(--tx3)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:15px;margin-bottom:12px}
+.card.tight{padding:12px}
+.row{display:flex;gap:8px;align-items:center}
+.row input,.row textarea{flex:1 1 auto;min-width:0}
+.wrap{display:flex;flex-wrap:wrap;gap:6px}
+.sp{flex:1}
+.chip{display:inline-flex;align-items:center;gap:5px;background:var(--card2);
+  border:1px solid var(--line);border-radius:99px;padding:5px 10px;font-size:12.5px;color:var(--tx2)}
+.chip b{color:var(--tx);font-weight:600}
+.btn{white-space:nowrap;flex:0 0 auto;appearance:none;border:1px solid var(--line);background:var(--card2);color:var(--tx);
+  border-radius:12px;padding:11px 14px;font-size:14.5px;font-weight:600;cursor:pointer}
+.btn:active{transform:scale(.985)}
+.btn.primary{background:var(--acc);border-color:var(--acc);color:#05121f}
+.btn.ghost{background:transparent}
+.btn.sm{padding:8px 11px;font-size:13px;border-radius:10px}
+.btn.on{border-color:var(--acc);color:var(--acc);background:rgba(96,165,250,.1)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.kv{background:var(--card2);border-radius:12px;padding:9px 10px}
+.kv .k{font-size:11.5px;color:var(--tx3)}
+.kv .v{font-size:16px;font-weight:700;margin-top:1px}
+input[type=number],input[type=text],input[type=search],textarea{
+  width:100%;background:var(--card2);border:1px solid var(--line);color:var(--tx);
+  border-radius:11px;padding:10px 12px;font-size:14.5px;font-family:inherit}
+textarea{resize:vertical;min-height:52px}
+input::placeholder,textarea::placeholder{color:var(--tx3)}
+label.f{display:block;font-size:12px;color:var(--tx3);margin:0 0 5px 2px}
+
+/* header */
+.top{display:flex;align-items:flex-end;justify-content:space-between;margin:4px 2px 14px}
+.top .d1{font-size:26px;font-weight:800;letter-spacing:-.4px}
+.top .d2{font-size:13px;color:var(--tx2);margin-top:2px}
+
+/* hero */
+.hero{position:relative;overflow:hidden;background:linear-gradient(160deg,var(--card),#10151d);
+  border:1px solid var(--line);border-radius:22px;padding:17px;margin-bottom:12px}
+.hero:before{content:"";position:absolute;inset:0 auto 0 0;width:5px;background:var(--zc,var(--REST))}
+.hero .zt{font-size:12px;letter-spacing:.6px;color:var(--zc,var(--REST));font-weight:700;text-transform:uppercase}
+.hero .t{font-size:21px;font-weight:800;margin:5px 0 3px;letter-spacing:-.3px}
+.hero .m{color:var(--tx2);font-size:14px}
+.hero .stats{margin-top:13px;display:grid;grid-template-columns:repeat(2,1fr);gap:7px}
+.hero .stats .kv{background:rgba(255,255,255,.035)}
+.badge{display:inline-block;font-size:11.5px;font-weight:700;padding:3px 8px;border-radius:7px;
+  background:rgba(255,255,255,.06);color:var(--tx2)}
+.badge.warn{background:rgba(251,191,36,.14);color:var(--warn)}
+.badge.ok{background:rgba(52,211,153,.14);color:var(--ok)}
+.badge.bad{background:rgba(248,113,113,.15);color:var(--bad)}
+
+/* list */
+.item{display:flex;gap:11px;align-items:center;padding:11px 0;border-top:1px solid var(--line)}
+.item:first-child{border-top:0}
+.dot{width:8px;height:8px;border-radius:99px;flex:0 0 auto;background:var(--REST)}
+.item .nm{font-weight:600}
+.item .ds{font-size:12.5px;color:var(--tx3)}
+
+/* timeline */
+.tl{position:relative;padding-left:24px}
+.tl:before{content:"";position:absolute;left:3px;top:10px;bottom:10px;width:2px;background:#2c3a4e;border-radius:2px}
+.tl .n{position:relative;display:flex;gap:8px;padding:6px 0}
+.tl .n:before{content:"";position:absolute;left:-25px;top:11px;width:10px;height:10px;border-radius:99px;
+  background:var(--card);border:2px solid var(--acc);box-sizing:border-box}
+.tl .tm{flex:0 0 46px;font-variant-numeric:tabular-nums;font-weight:700;font-size:13px;color:var(--acc)}
+.tl .tx{flex:1;min-width:0;font-size:14px}
+
+/* tabs */
+.tabbar{position:fixed;left:0;right:0;bottom:0;z-index:40;display:flex;
+  background:rgba(11,14,20,.92);backdrop-filter:blur(14px);border-top:1px solid var(--line);
+  padding-bottom:env(safe-area-inset-bottom)}
+.tabbar button{flex:1;appearance:none;background:none;border:0;color:var(--tx3);
+  padding:11px 4px 10px;font-size:11.5px;font-weight:600;display:flex;flex-direction:column;align-items:center;gap:3px}
+.tabbar button .ic{font-size:17px;line-height:1}
+.tabbar button.on{color:var(--tx)}
+
+/* week */
+.wkhead{display:flex;align-items:center;gap:8px;margin-bottom:9px}
+.wkhead .n{font-weight:800;font-size:16px}
+.wksum{font-size:12.5px;color:var(--tx3)}
+.days{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-top:11px}
+.dbtn{background:var(--card2);border:1px solid var(--line);border-radius:12px;padding:9px 6px;
+  text-align:center;cursor:pointer;color:var(--tx)}
+.dbtn .w{font-size:11.5px;color:var(--tx3)}
+.dbtn .v{font-size:13.5px;font-weight:700;margin-top:2px}
+.dbtn .z{width:100%;height:3px;border-radius:9px;margin-top:6px;background:var(--REST)}
+.dbtn.off{opacity:.55}
+.dbtn .done{font-size:10.5px;color:var(--ok)}
+
+/* sheet */
+.mask{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:60;display:none}
+.mask.on{display:block}
+.sheet{position:fixed;left:0;right:0;bottom:0;z-index:61;max-height:88vh;overflow:auto;
+  background:var(--card);border-radius:22px 22px 0 0;border-top:1px solid var(--line);
+  padding:16px 16px calc(18px + env(safe-area-inset-bottom));transform:translateY(100%);
+  transition:transform .24s ease;max-width:560px;margin:0 auto}
+.sheet.on{transform:translateY(0)}
+.sheet h3{font-size:18px;margin-bottom:2px}
+.handle{width:38px;height:4px;border-radius:9px;background:var(--line);margin:0 auto 12px}
+ul.tips{margin:8px 0 0;padding-left:18px;color:var(--tx2);font-size:13.5px}
+ul.tips li{margin:3px 0}
+.hr{border:0;border-top:1px solid var(--line);margin:13px 0}
+.prog{height:7px;border-radius:9px;background:var(--card2);overflow:hidden;margin:8px 0 4px}
+.prog i{display:block;height:100%;background:linear-gradient(90deg,var(--E),var(--M));border-radius:9px}
+.wx{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-top:10px}
+.advice{margin-top:11px;padding:11px 12px;border-radius:12px;font-size:13.5px;
+  background:rgba(96,165,250,.09);border:1px solid rgba(96,165,250,.22);color:#cfe3ff}
+.advice.warn{background:rgba(251,191,36,.09);border-color:rgba(251,191,36,.25);color:#ffe6ad}
+.advice.bad{background:rgba(248,113,113,.1);border-color:rgba(248,113,113,.28);color:#ffd2d2}
+.advice.ok{background:rgba(52,211,153,.09);border-color:rgba(52,211,153,.24);color:#c6f6e4}
+.feel{display:flex;gap:6px;margin-top:8px}
+.feel button{flex:1;padding:8px 0;border-radius:10px;border:1px solid var(--line);background:var(--card2);
+  color:var(--tx2);font-size:13px;font-weight:600}
+.feel button.on{background:var(--acc);color:#05121f;border-color:var(--acc)}
+.hide{display:none!important}
+.seg{display:flex;background:var(--card2);border:1px solid var(--line);border-radius:12px;padding:3px;gap:3px}
+.seg button{flex:1;border:0;background:none;color:var(--tx2);padding:8px 6px;border-radius:9px;font-size:13px;font-weight:600}
+.seg button.on{background:var(--card);color:var(--tx);box-shadow:0 1px 0 rgba(255,255,255,.04)}
+footer.foot{text-align:center;padding:6px 0 18px;font-size:11.5px;color:var(--tx3)}
+</style>
+</head>
+<body>
+<div class="app" id="app"></div>
+
+<div class="mask" id="mask"></div>
+<div class="sheet" id="sheet">
+  <div class="handle"></div>
+  <div id="sheetBody"></div>
+</div>
+
+<nav class="tabbar" id="tabbar">
+  <button data-tab="today" class="on"><span class="ic">◎</span>今天</button>
+  <button data-tab="plan"><span class="ic">▤</span>12 周</button>
+  <button data-tab="log"><span class="ic">✓</span>记录</button>
+  <button data-tab="set"><span class="ic">⚙</span>设置</button>
+</nav>
+
+<script>
+const PLAN = {"meta":{"id":"ENDURANCE-PLAN-2026-V2.1","title":"12 周跑步恢复与进阶","start":"2026-11-16","end":"2027-02-07","weeks":12,"totalKm":250.5,"runDays":[1,3,5,6],"redLines":["出门前 20 分等渗盐水洗鼻","20:20 前必须结束全部训练","训后 30 分内补水 + 碳水蛋白","步频守住约 180 步/分"]},"zones":{"E":{"name":"轻松有氧跑","hr":"135–150","rpe":"RPE 3–4","feel":"全程能完整聊天不喘气","goal":"打牢有氧底子与长距离耐力"},"M":{"name":"稳态有氧跑","hr":"152–164","rpe":"RPE 5–6","feel":"呼吸加深但稳健，只能说短句","goal":"提高巡航经济性，教会身体节省糖原"},"T":{"name":"乳酸阈值跑","hr":"166–176","rpe":"RPE 7","feel":"双腿微酸但能顶住","goal":"提升边跑边清除乳酸的抗疲劳能力"},"GP":{"name":"10K 专项配速","hr":"174–182","rpe":"RPE 7.5–8","feel":"模拟 10 公里目标比赛节奏","goal":"锁定比赛步频与神经募集节奏"},"I":{"name":"有氧间歇跑","hr":"178–190","rpe":"RPE 8–9","feel":"很吃力但可控（约 5 公里比赛速度）","goal":"刺激最大摄氧量上限"},"ST":{"name":"80m 顺畅加速","hr":null,"rpe":"不控心率","feel":"轻快不憋气","goal":"唤醒脚踝弹性与 180 步频"}},"strengths":{"A":{"name":"力量模块 A","slot":"周四跑后 · 25 分钟","focus":"下肢离心缓冲与跟腱刚度","items":[{"n":"保加利亚分腿蹲","tip":"后脚搭床沿/椅面慢下","sets":"W1–4: 2×10/侧（2 秒下）｜W5–8: 3×12（3 秒下）｜W9–11: 3×12（底部停顿 2 秒）","alt":"前膝酸痛：双腿靠墙浅蹲 45°–60°，3×45 秒"},{"n":"单腿罗马尼亚硬拉","tip":"徒手燕式前俯保持平衡","sets":"W1–4: 2×10/侧（扶墙）｜W5–8: 3×12（3 秒下）｜W9–11: 3×12（底部停顿 2 秒）","alt":"下背或大腿后侧紧绷：仰卧双腿臀桥 3×15"},{"n":"单腿微屈膝提踵","tip":"前脚掌踩台阶，微屈膝 20°","sets":"W1–4: 3×12/侧（双起单落）｜W5–8: 3×15（3 秒下）｜W9–11: 4×15（顶峰停 2 秒）","alt":"跟腱或足底敏感：平地微屈膝双脚提踵 3×45 秒"},{"n":"死虫式核心抗伸展","tip":"仰卧四肢交替伸展，腰贴地","sets":"W1–4: 2×12（单腿）｜W5–8: 3×16（对侧手脚）｜W9–11: 3×20（末端呼气停 2 秒）","alt":"腰椎离地或髋部弹响：屈膝 90° 脚跟轻点地 3×12"}]},"B":{"name":"力量模块 B","slot":"周二跑后 · 20 分钟","focus":"骨盆抗掉髋与足踝稳定","items":[{"n":"侧卧蚌式 / 屈膝侧桥","tip":"强化臀中肌防止掉髋","sets":"W1–4: 2×15/侧（蚌式）｜W5–8: 3×15（顶峰停 2 秒）｜W9–11: 3×30 秒/侧","alt":"髋外侧压痛：仰卧屈膝双膝外推对抗 3×30 秒"},{"n":"仰卧单腿臀桥","tip":"激活臀肌改善久坐","sets":"W1–4: 2×12/侧（停 1 秒）｜W5–8: 3×12（停 2 秒）｜W9–11: 3×15（抱胸）","alt":"大腿后侧抽筋：脚跟挪近 5–8cm 或改双腿桥"},{"n":"靠墙勾脚尖训练","tip":"强化小腿前侧防胫骨痛","sets":"W1–4: 2×15（距墙 25cm）｜W5–8: 3×18（停 2 秒）｜W9–11: 3×20（距墙 35cm）","alt":"胫骨前侧酸胀：距墙缩至 15cm 改无痛踝泵"},{"n":"赤足短足训练","tip":"足趾不蜷曲，主动收紧足弓","sets":"W1–4: 2×45 秒（坐姿）｜W5–8: 3×45 秒（双腿站）｜W9–11: 3×45 秒（单腿站）","alt":"足底筋膜酸痛：软垫坐姿轻度抓握放松，暂停单腿站"}]}},"strengthRule":["第 4 周 A/B 组数减半","第 8 周暂停 A/B","第 11 周 A 减半","第 12 周全停"],"tests":{"w8":{"node":"W8 周日 · 2026-01-10","name":"5.0 公里阶段测验 ②","structure":"2k 热身 + 5.0 km 全力测验 + 2k 冷身（共 9.0 km）","splits":"1–2K 稳在 4:55–5:00；3–4K 4:50–4:55；5K 加速","target":"≤ 24 分 30 秒，且无痛解锁 W9–12 新配速","extra":["末 15 分平均心率减 3–5 作新阈值","未达标沿用 W5–8 配速","后 2K 触地延长 ≤5 ms"]},"w12":{"node":"W12 周日 · 2027-02-07","name":"10.0 公里成果检验 ③","structure":"1.5k 热身 + 10.0 km 检验跑 + 1k 冷身（共 12.5 km）","splits":"1–3K 5:16–5:20；4–7K 5:12–5:16（6K 补水）；8–10K 5:10–5:15","target":"目标完赛 51:40–53:00（衰减压缩至 12.8–20.8 秒/km）","extra":["第 13 周纯 E 区恢复（二 4.5E / 四 5.0E / 日 6.5E，共 16km）","步频 ≥180，触地 ≤238 ms"]},"w4":{"node":"W4 周四 · 2026-12-10","name":"步态复测 ①","structure":"1k 热身 + 3.0 km 定速测步态 + 1k 冷身（共 5.0 km）","splits":"定速段配速 5:40/km（预估 160–170 次/分）","target":"步频 178–182，触地 ≤242ms，垂直步幅比 ≤7.7%","extra":["验停跑 1 个月恢复期结束后的基础步态","跑后次日晨起胫骨内侧与跟腱无压痛"]}},"weeks":[{"n":1,"start":"2026-11-16","end":"2026-11-22","phase":"恢复期","label":"基准周","km":16.0,"change":"基准启动周","days":[{"date":"2026-11-16","dow":0,"dowName":"周一","week":1,"dateLabel":"11/16","type":"rest","zone":null,"title":"完全休息日","time":"20:00–20:20","km":0.0,"mn":12,"hr":null,"pace":null,"main":"零路跑 · 泡沫轴轻滚放松 + 腹式呼吸","detail":["泡沫轴轻滚 15 分钟（含 5 分钟腹式呼吸）"],"strength":null,"test":null,"red":["不路跑、不练力量"],"notes":["晨起空腹称重；禁滚大腿外侧"]},{"date":"2026-11-17","dow":1,"dowName":"周二","week":1,"dateLabel":"11/17","type":"easy","zone":"E","title":"轻松跑 + 力量 B","time":"19:10–20:15","km":4.5,"mn":30,"hr":"135–150","pace":"6:20–6:50","main":"4.5 km 轻松跑（约 30 分钟）+ 4×80 米顺畅跑","detail":["心率 135–150 次/分 ｜ 配速 6:20–6:50","19:10 开跑 → 19:55 练力量 B（20 分）","80 米约 23 秒/趟（走休 60 秒），步频 180"],"strength":"B","test":null,"red":[],"notes":[]},{"date":"2026-11-18","dow":2,"dowName":"周三","week":1,"dateLabel":"11/18","type":"rest","zone":null,"title":"完全休息日","time":null,"km":0.0,"mn":0,"hr":null,"pace":null,"main":"全天休息 · 零跑步、零下肢力量","detail":["零跑步、零下肢力量","晚餐 17:30–18:00 吃七分饱"],"strength":null,"test":null,"red":["零跑步、零下肢力量"],"notes":["周四训练前 48 小时完整恢复窗口","全天摄入约 2,100–2,300 千卡"]},{"date":"2026-11-19","dow":3,"dowName":"周四","week":1,"dateLabel":"11/19","type":"quality","zone":"E","title":"轻松跑 + 力量 A","time":"19:05–20:20","km":5.0,"mn":33,"hr":"135–150","pace":"6:20–6:50","main":"5.0 km 轻松跑（约 33 分钟）","detail":["心率 135–150 次/分 ｜ 配速 6:20–6:50","19:05 开跑（约 33 分）","→ 19:55 练力量 A（25 分）","出门前 20 分洗鼻；前 10 分钟压慢至 6:30–6:50"],"strength":"A","test":null,"red":[],"notes":[]},{"date":"2026-11-20","dow":4,"dowName":"周五","week":1,"dateLabel":"11/20","type":"rest","zone":null,"title":"完全休息日","time":null,"km":0.0,"mn":0,"hr":null,"pace":null,"main":"全天休息 · 零跑步、零下肢力量","detail":["零跑步、零下肢力量","晚餐 17:30–18:00 吃七分饱"],"strength":null,"test":null,"red":["零跑步、零下肢力量"],"notes":["晚餐正常吃主食，为周日储备糖原"]},{"date":"2026-11-21","dow":5,"dowName":"周六","week":1,"dateLabel":"11/21","type":"rest","zone":null,"title":"完全休息日（备赛周日长距离）","time":null,"km":0.0,"mn":0,"hr":null,"pace":null,"main":"0.0 km · 全天休息","detail":["严禁任何下肢力量训练","为周日长距离储备体力"],"strength":null,"test":null,"red":["严禁在周六安排任何下肢力量训练"],"notes":["严禁在周六安排任何下肢力量训练","第 1–5 周周六均安排全休"]},{"date":"2026-11-22","dow":6,"dowName":"周日","week":1,"dateLabel":"11/22","type":"long","zone":"E","title":"周末长距离 LSD","time":"19:00–20:15","km":6.5,"mn":43,"hr":"≤148","pace":"6:20–6:50","main":"6.5 km 周末长距离 LSD（约 43 分钟）","detail":["心率 ≤148 次/分 ｜ 配速 6:20–6:50","19:00 准时开跑 · 20:15 前结束","全程可完整聊天，步频约 180 步/分"],"strength":null,"test":null,"red":[],"notes":[]}]},{"n":2,"start":"2026-11-23","end":"2026-11-29","phase":"恢复期","label":"恢复期稳步加量","km":17.5,"change":"+9.4%","days":[{"date":"2026-11-23","dow":0,"dowName":"周一","week":2,"dateLabel":"11/23","type":"rest","zone":null,"title":"完全休息日","time":"20:00–20:20","km":0.0,"mn":12,"hr":null,"pace":null,"main":"零路跑 · 泡沫轴轻滚放松 + 腹式呼吸","detail":["泡沫轴轻滚 15 分钟（含 5 分钟腹式呼吸）"],"strength":null,"test":null,"red":["不路跑、不练力量"],"notes":["晨起空腹称重（防跌破 49.3 kg）"]},{"date":"2026-11-24","dow":1,"dowName":"周二","week":2,"dateLabel":"11/24","type":"easy","zone":"E","title":"轻松跑 + 力量 B","time":"19:10–20:15","km":5.0,"mn":33,"hr":"135–150","pace":"6:20–6:50","main":"5.0 km 轻松跑（约 33 分钟）+ 4×80 米顺畅跑","detail":["心率 135–150 次/分 ｜ 配速 6:20–6:50","19:10 开跑 → 19:55 练力量 B（20 分）","80 米约 23 秒/趟（走休 60 秒），步频 180"],"strength":"B","test":null,"red":[],"notes":[]},{"date":"2026-11-25","dow":2,"dowName":"周三","week":2,"dateLabel":"11/25","type":"rest","zone":null,"title":"完全休息日","time":null,"km":0.0,"mn":0,"hr":null,"pace":null,"main":"全天休息 · 零跑步、零下肢力量","detail":["零跑步、零下肢力量","晚餐 17:30–18:00 吃七分饱"],"strength":null,"test":null,"red":["零跑步、零下肢力量"],"notes":["周四训练前 48 小时完整恢复窗口","切勿因白天久坐自行加练深蹲"]},{"date":"2026-11-26","dow":3,"dowName":"周四","week":2,"dateLabel":"11/26","type":"quality","zone":"E","title":"轻松跑 + 力量 A","time":"19:05–20:20","km":5.5,"mn":36,"hr":"135–150","pace":"6:20–6:50","main":"5.5 km 轻松跑（约 36 分钟）","detail":["心率 135–150 次/分 ｜ 配速 6:20–6:50","19:05 开跑（约 36 分）","→ 19:55 练力量 A（25 分）","巩固有氧步频 180 步/分，不跨大步"],"strength":"A","test":null,"red":[],"notes":[]},{"date":"2026-11-27","dow":4,"dowName":"周五","week":2,"dateLabel":"11/27","type":"rest","zone":null,"title":"完全休息日","time":null,"km":0.0,"mn":0,"hr":null,"pace":null,"main":"全天休息 · 零跑步、零下肢力量","detail":["零跑步、零下肢力量","晚餐 17:30–18:00 吃七分饱"],"strength":null,"test":null,"red":["零跑步、零下肢力量"],"notes":["保证睡眠促进肌腱胶原蛋白修复"]},{"date":"2026-11-28","dow":5,"dowName":"周六","week":2,"dateLabel":"11/28","type":"rest","zone":null,"title":"完全休息日（备赛周日长距离）","time":null,"km":0.0,"mn":0,"hr":null,"pace":null,"main":"0.0 km · 全天休息","detail":["严禁任何下肢力量训练","为周日长距离储备体力"],"strength":null,"test":null,"red":["严禁在周六安排任何下肢力量训练"],"notes":["严禁在周六安排任何下肢力量训练","晚饭 17:30–18:00 吃七分饱"]},{"date":"2026-11-29","dow":6,"dowName":"周日","week":2,"dateLabel":"11/29","type":"long","zone":"E","title":"周末长距离 LSD","time":"19:00–20:15","km":7.0,"mn":46,"hr":"135–150","pace":"6:20–6:50","main":"7.0 km 周末长距离 LSD（约 46 分钟）","detail":["心率 135–150 次/分 ｜ 配速 6:20–6:50","19:00 准时开跑 · 较上周增加 0.5 km","全程可完整聊天，训后 30 分内补餐"],"strength":null,"test":null,"red":[],"notes":[]}]},{"n":3,"start":"2026-11-30","end":"2026-12-06","phase":"恢复期","label":"恢复期稳态初探","km":19.0,"change":"+8.6%","days":[{"date":"2026-11-30","dow":0,"dowName":"周一","week":3,"dateLabel":"11/30","type":"rest","zone":null,"title":"完全休息日","time":"20:00–20:20","km":0.0,"mn":12,"hr":null,"pace":null,"main":"零路跑 · 泡沫轴轻滚放松 + 腹式呼吸","detail":["泡沫轴轻滚 15 分钟（含 5 分钟腹式呼吸）"],"strength":null,"test":null,"red":["不路跑、不练力量"],"notes":["晨起空腹称重；滚压小腿与臀肌"]},{"date":"2026-12-01","dow":1,"dowName":"周二","week":3,"dateLabel":"12/1","type":"easy","zone":"E","title":"轻松跑 + 力量 B","time":"19:10–20:15","km":5.5,"mn":36,"hr":"135–150","pace":"6:20–6:50","main":"5.5 km 轻松跑（约 36 分钟）+ 5×80 米顺畅跑","detail":["心率 135–150 次/分 ｜ 配速 6:20–6:50","19:10 开跑 → 19:55 练力量 B（20 分）","80 米约 23 秒/趟（走休 60 秒），步频 180"],"strength":"B","test":null,"red":[],"notes":[]},{"date":"2026-12-02","dow":2,"dowName":"周三","week":3,"dateLabel":"12/2","type":"rest","zone":null,"title":"完全休息日","time":null,"km":0.0,"mn":0,"hr":null,"pace":null,"main":"全天休息 · 零跑步、零下肢力量","detail":["零跑步、零下肢力量","晚餐 17:30–18:00 吃七分饱"],"strength":null,"test":null,"red":["零跑步、零下肢力量"],"notes":["周四稳态跑前 48 小时完整恢复窗口","全天碳水 250–350g、蛋白 70–80g"]},{"date":"2026-12-03","dow":3,"dowName":"周四","week":3,"dateLabel":"12/3","type":"quality","zone":"M","title":"稳态初探 + 力量 A","time":"19:05–20:20","km":6.0,"mn":38,"hr":"152–164","pace":"6:05–6:20","main":"共 6.0 km：4.0 km E 区 + 2.0 km M 区 @ 6:05–6:20","detail":["心率 152–164 次/分 ｜ 配速 6:05–6:20","19:05 开跑（约 38 分）","→ 19:55 练力量 A（25 分）","前 4 km 保持 135–150 次/分（6:20–6:50）"],"strength":"A","test":null,"red":[],"notes":[]},{"date":"2026-12-04","dow":4,"dowName":"周五","week":3,"dateLabel":"12/4","type":"rest","zone":null,"title":"完全休息日","time":null,"km":0.0,"mn":0,"hr":null,"pace":null,"main":"全天休息 · 零跑步、零下肢力量","detail":["零跑步、零下肢力量","晚餐 17:30–18:00 吃七分饱"],"strength":null,"test":null,"red":["零跑步、零下肢力量"],"notes":["消退周四微损伤，早睡恢复"]},{"date":"2026-12-05","dow":5,"dowName":"周六","week":3,"dateLabel":"12/5","type":"rest","zone":null,"title":"完全休息日（备赛周日长距离）","time":null,"km":0.0,"mn":0,"hr":null,"pace":null,"main":"0.0 km · 全天休息","detail":["严禁任何下肢力量训练","为周日长距离储备体力"],"strength":null,"test":null,"red":["严禁在周六安排任何下肢力量训练"],"notes":["严禁在周六安排任何下肢力量训练","晚饭七分饱，少油少辣"]},{"date":"2026-12-06","dow":6,"dowName":"周日","week":3,"dateLabel":"12/6","type":"long","zone":"E","title":"周末长距离 LSD","time":"19:00–20:15","km":7.5,"mn":49,"hr":"135–150","pace":"6:20–6:50","main":"7.5 km 周末长距离 LSD（约 49 分钟）","detail":["心率 135–150 次/分 ｜ 配速 6:20–6:50","19:00 准时开跑 · 较上周增加 0.5 km","严格压住心率，切勿前半程抢快"],"strength":null,"test":null,"red":[],"notes":[]}]},{"n":4,"start":"2026-12-07","end":"2026-12-13","phase":"恢复期","label":"减量与步态复测①周","km":17.5,"change":"-7.9% 减量","days":[{"date":"2026-12-07","dow":0,"dowName":"周一","week":4,"dateLabel":"12/7","type":"rest","zone":null,"title":"完全休息日","time":"20:00–20:20","km":0.0,"mn":12,"hr":null,"pace":null,"main":"零路跑 · 泡沫轴轻滚放松 + 腹式呼吸","detail":["泡沫轴轻滚 15 分钟（含 5 分钟腹式呼吸）"],"strength":null,"test":null,"red":["不路跑、不练力量"],"notes":["晨起空腹称重；本周为减量恢复周"]},{"date":"2026-12-08","dow":1,"dowName":"周二","week":4,"dateLabel":"12/8","type":"easy","zone":"E","title":"轻松跑 + 力量 B（减半）","time":"19:10–20:15","km":5.0,"mn":33,"hr":"135–150","pace":"6:20–6:50","main":"5.0 km 轻松跑（约 33 分钟）+ 4×80 米顺畅跑","detail":["心率 135–150 次/分 ｜ 配速 6:20–6:50","19:10 开跑 → 19:55 练力量 B（20 分）","80 米约 23 秒/趟（走休 60 秒），步频 180","力量 B 组数减半"],"strength":"B","test":null,"red":[],"notes":[]},{"date":"2026-12-09","dow":2,"dowName":"周三","week":4,"dateLabel":"12/9","type":"rest","zone":null,"title":"完全休息日","time":null,"km":0.0,"mn":0,"hr":null,"pace":null,"main":"全天休息 · 零跑步、零下肢力量","detail":["零跑步、零下肢力量","晚餐 17:30–18:00 吃七分饱"],"strength":null,"test":null,"red":["零跑步、零下肢力量"],"notes":["确保跑步动态传感器/心率带电量充足","恢复窗口整整 48 小时"]},{"date":"2026-12-10","dow":3,"dowName":"周四","week":4,"dateLabel":"12/10","type":"quality","zone":"M","title":"步态复测 ① + 力量 A减半","time":"19:05–20:20","km":5.0,"mn":30,"hr":"160–172","pace":"5:40","main":"共 5.0 km：1.0 km E 区 + 3.0 km T 区（定速 5:40） + 1.0 km E 区","detail":["心率 160–172 次/分 ｜ 定速 5:40","19:05 开跑（约 30 分）","→ 19:55 练力量 A（25 分）","定速段 3.0 km 配 5:40/km（预估 160–170 次/分）","验收：步频 178–182、触地 ≤242ms、垂直步幅比 ≤7.7%"],"strength":"A","test":"w4","red":[],"notes":[]},{"date":"2026-12-11","dow":4,"dowName":"周五","week":4,"dateLabel":"12/11","type":"rest","zone":null,"title":"完全休息日","time":null,"km":0.0,"mn":0,"hr":null,"pace":null,"main":"全天休息 · 零跑步、零下肢力量","detail":["零跑步、零下肢力量","晚餐 17:30–18:00 吃七分饱"],"strength":null,"test":null,"red":["零跑步、零下肢力量"],"notes":["若晨起有局部按压痛需多休 48 小时"]},{"date":"2026-12-12","dow":5,"dowName":"周六","week":4,"dateLabel":"12/12","type":"rest","zone":null,"title":"完全休息日（备赛周日长距离）","time":null,"km":0.0,"mn":0,"hr":null,"pace":null,"main":"0.0 km · 全天休息","detail":["严禁任何下肢力量训练","为周日长距离储备体力"],"strength":null,"test":null,"red":["严禁在周六安排任何下肢力量训练"],"notes":["严禁在周六安排任何下肢力量训练","晚饭 17:30–18:00 吃七分饱"]},{"date":"2026-12-13","dow":6,"dowName":"周日","week":4,"dateLabel":"12/13","type":"long","zone":"E","title":"周末长距离 LSD","time":"19:00–20:15","km":7.5,"mn":49,"hr":"135–150","pace":"6:20–6:50","main":"7.5 km 周末长距离 LSD（约 49 分钟）","detail":["心率 135–150 次/分 ｜ 配速 6:20–6:50","19:00 准时开跑 · 与上周持平","完成第一阶段恢复期，下周配速小幅升级"],"strength":null,"test":null,"red":[],"notes":[]}]},{"n":5,"start":"2026-12-14","end":"2026-12-20","phase":"巩固期","label":"配速小幅升级","km":19.0,"change":"+8.6%","days":[{"date":"2026-12-14","dow":0,"dowName":"周一","week":5,"dateLabel":"12/14","type":"rest","zone":null,"title":"完全休息日","time":"20:00–20:20","km":0.0,"mn":12,"hr":null,"pace":null,"main":"零路跑 · 泡沫轴轻滚放松 + 腹式呼吸","detail":["泡沫轴轻滚 15 分钟（含 5 分钟腹式呼吸）"],"strength":null,"test":null,"red":["不路跑、不练力量"],"notes":["晨起空腹称重；本周起力量恢复正常组数"]},{"date":"2026-12-15","dow":1,"dowName":"周二","week":5,"dateLabel":"12/15","type":"easy","zone":"E","title":"轻松跑 + 力量 B","time":"19:10–20:15","km":5.0,"mn":32,"hr":"135–150","pace":"6:05–6:35","main":"5.0 km 轻松跑（约 32 分钟）+ 5×80 米顺畅跑","detail":["心率 135–150 次/分 ｜ 配速 6:05–6:35","19:10 开跑 → 19:55 练力量 B（20 分）","80 米约 22 秒/趟（走休 60 秒），步频 180"],"strength":"B","test":null,"red":[],"notes":[]},{"date":"2026-12-16","dow":2,"dowName":"周三","week":5,"dateLabel":"12/16","type":"rest","zone":null,"title":"完全休息日","time":null,"km":0.0,"mn":0,"hr":null,"pace":null,"main":"全天休息 · 零跑步、零下肢力量","detail":["零跑步、零下肢力量","晚餐 17:30–18:00 吃七分饱"],"strength":null,"test":null,"red":["零跑步、零下肢力量"],"notes":["周四稳态课前 48 小时完整恢复窗口","保证主食与蛋白质摄入"]},{"date":"2026-12-17","dow":3,"dowName":"周四","week":5,"dateLabel":"12/17","type":"quality","zone":"M","title":"稳态有氧跑 + 力量 A","time":"19:05–20:20","km":6.0,"mn":37,"hr":"152–164","pace":"5:55–6:10","main":"共 6.0 km：1.5 km E 区 + 3.5 km M 区 @ 5:55–6:10 + 1.0 km E 区","detail":["心率 152–164 次/分 ｜ 配速 5:55–6:10","19:05 开跑（约 37 分）","→ 19:55 练力量 A（25 分）","前 10 分钟热身压慢至 6:30–6:50；出门前洗鼻"],"strength":"A","test":null,"red":[],"notes":[]},{"date":"2026-12-18","dow":4,"dowName":"周五","week":5,"dateLabel":"12/18","type":"rest","zone":null,"title":"完全休息日","time":null,"km":0.0,"mn":0,"hr":null,"pace":null,"main":"全天休息 · 零跑步、零下肢力量","detail":["零跑步、零下肢力量","晚餐 17:30–18:00 吃七分饱"],"strength":null,"test":null,"red":["零跑步、零下肢力量"],"notes":["晚间避免熬夜，促进超量恢复"]},{"date":"2026-12-19","dow":5,"dowName":"周六","week":5,"dateLabel":"12/19","type":"rest","zone":null,"title":"完全休息日（备赛周日长距离）","time":null,"km":0.0,"mn":0,"hr":null,"pace":null,"main":"0.0 km · 全天休息","detail":["严禁任何下肢力量训练","为周日长距离储备体力"],"strength":null,"test":null,"red":["严禁在周六安排任何下肢力量训练"],"notes":["严禁在周六安排任何下肢力量训练","晚饭 17:30–18:00 吃七分饱"]},{"date":"2026-12-20","dow":6,"dowName":"周日","week":5,"dateLabel":"12/20","type":"long","zone":"E","title":"周末长距离 LSD","time":"19:00–20:15","km":8.0,"mn":50,"hr":"135–150","pace":"6:05–6:35","main":"8.0 km 周末长距离 LSD（约 50 分钟）","detail":["心率 135–150 次/分 ｜ 配速 6:05–6:35","19:00 准时开跑 · 较上周增加 0.5 km","全程可完整聊天，步频约 180 步/分"],"strength":null,"test":null,"red":[],"notes":[]}]},{"n":6,"start":"2026-12-21","end":"2026-12-27","phase":"巩固期","label":"引入乳酸阈值跑","km":21.0,"change":"+10.5%","days":[{"date":"2026-12-21","dow":0,"dowName":"周一","week":6,"dateLabel":"12/21","type":"rest","zone":null,"title":"完全休息日","time":"20:00–20:20","km":0.0,"mn":12,"hr":null,"pace":null,"main":"零路跑 · 泡沫轴轻滚放松 + 腹式呼吸","detail":["泡沫轴轻滚 15 分钟（含 5 分钟腹式呼吸）"],"strength":null,"test":null,"red":["不路跑、不练力量"],"notes":["晨起空腹称重；本周起周六加入短慢跑"]},{"date":"2026-12-22","dow":1,"dowName":"周二","week":6,"dateLabel":"12/22","type":"easy","zone":"E","title":"轻松跑 + 力量 B","time":"19:10–20:15","km":4.5,"mn":29,"hr":"135–150","pace":"6:05–6:35","main":"4.5 km 轻松跑（约 29 分钟）+ 5×80 米顺畅跑","detail":["心率 135–150 次/分 ｜ 配速 6:05–6:35","19:10 开跑 → 19:55 练力量 B（20 分）","80 米约 22 秒/趟（走休 60 秒），步频 180"],"strength":"B","test":null,"red":[],"notes":[]},{"date":"2026-12-23","dow":2,"dowName":"周三","week":6,"dateLabel":"12/23","type":"rest","zone":null,"title":"完全休息日","time":null,"km":0.0,"mn":0,"hr":null,"pace":null,"main":"全天休息 · 零跑步、零下肢力量","detail":["零跑步、零下肢力量","晚餐 17:30–18:00 吃七分饱"],"strength":null,"test":null,"red":["零跑步、零下肢力量"],"notes":["周四首次阈值跑前 48 小时恢复窗口","攒足糖原，保障周四高质量完成"]},{"date":"2026-12-24","dow":3,"dowName":"周四","week":6,"dateLabel":"12/24","type":"quality","zone":"T","title":"阈值短巡航 + 力量 A","time":"19:05–20:20","km":6.0,"mn":37,"hr":"166–176","pace":"5:25–5:35","main":"共 6.0 km：1.5 km E + 3 × 1.0 km T 区 @ 5:25–5:35［组间慢跑 0.25 km×2］ + 1.0 km E","detail":["心率 166–176 次/分 ｜ 配速 5:25–5:35","19:05 开跑（约 37 分）","→ 19:55 练力量 A（25 分）","每组间慢跑 0.25 km（共 0.5 km）→ 19:55 练力量 A","双腿微酸但能顶住；张口时舌尖抵上颚"],"strength":"A","test":null,"red":[],"notes":[]},{"date":"2026-12-25","dow":4,"dowName":"周五","week":6,"dateLabel":"12/25","type":"rest","zone":null,"title":"完全休息日","time":null,"km":0.0,"mn":0,"hr":null,"pace":null,"main":"全天休息 · 零跑步、零下肢力量","detail":["零跑步、零下肢力量","晚餐 17:30–18:00 吃七分饱"],"strength":null,"test":null,"red":["零跑步、零下肢力量"],"notes":["保证睡眠修复周四离心力量微损伤"]},{"date":"2026-12-26","dow":5,"dowName":"周六","week":6,"dateLabel":"12/26","type":"wake","zone":"E","title":"短程唤醒慢跑","time":"19:15–19:45","km":2.0,"mn":13,"hr":"135–150","pace":"6:05–6:35","main":"2.0 km 轻松唤醒慢跑（约 13 分钟）+ 拉伸","detail":["心率 135–150 次/分 ｜ 配速 6:05–6:35"],"strength":null,"test":null,"red":[],"notes":["19:15–19:45（严禁在周六练下肢力量）","极轻松激活神经，切勿跑快消耗体力"]},{"date":"2026-12-27","dow":6,"dowName":"周日","week":6,"dateLabel":"12/27","type":"long","zone":"E","title":"周末长距离 LSD","time":"19:00–20:15","km":8.5,"mn":53,"hr":"135–150","pace":"6:05–6:35","main":"8.5 km 周末长距离 LSD（约 53 分钟）","detail":["心率 135–150 次/分 ｜ 配速 6:05–6:35","19:00 准时开跑 · 较上周增加 0.5 km","训后 30 分内补 250ml 水 + 碳水蛋白"],"strength":null,"test":null,"red":[],"notes":[]}]},{"n":7,"start":"2026-12-28","end":"2027-01-03","phase":"巩固期","label":"阈值加长","km":23.0,"change":"+9.5%","days":[{"date":"2026-12-28","dow":0,"dowName":"周一","week":7,"dateLabel":"12/28","type":"rest","zone":null,"title":"完全休息日","time":"20:00–20:20","km":0.0,"mn":12,"hr":null,"pace":null,"main":"零路跑 · 泡沫轴轻滚放松 + 腹式呼吸","detail":["泡沫轴轻滚 15 分钟（含 5 分钟腹式呼吸）"],"strength":null,"test":null,"red":["不路跑、不练力量"],"notes":["晨起空腹称重（防跌破 49.3 kg）"]},{"date":"2026-12-29","dow":1,"dowName":"周二","week":7,"dateLabel":"12/29","type":"easy","zone":"E","title":"轻松跑 + 力量 B","time":"19:10–20:15","km":5.0,"mn":32,"hr":"135–150","pace":"6:05–6:35","main":"5.0 km 轻松跑（约 32 分钟）+ 6×80 米顺畅跑","detail":["心率 135–150 次/分 ｜ 配速 6:05–6:35","19:10 开跑 → 19:55 练力量 B（20 分）","80 米约 22 秒/趟（走休 60 秒），步频 180"],"strength":"B","test":null,"red":[],"notes":[]},{"date":"2026-12-30","dow":2,"dowName":"周三","week":7,"dateLabel":"12/30","type":"rest","zone":null,"title":"完全休息日","time":null,"km":0.0,"mn":0,"hr":null,"pace":null,"main":"全天休息 · 零跑步、零下肢力量","detail":["零跑步、零下肢力量","晚餐 17:30–18:00 吃七分饱"],"strength":null,"test":null,"red":["零跑步、零下肢力量"],"notes":["周四阈值课前 48 小时完整恢复窗口","全天碳水 250–350g、蛋白 70–80g"]},{"date":"2026-12-31","dow":3,"dowName":"周四","week":7,"dateLabel":"12/31","type":"quality","zone":"T","title":"阈值中巡航 + 力量 A","time":"19:05–20:20","km":6.5,"mn":40,"hr":"166–176","pace":"5:25–5:35","main":"共 6.5 km：1.5 km E + 3 × 1.2 km T 区 @ 5:25–5:35［组间慢跑 0.2 km×2］ + 1.0 km E","detail":["心率 166–176 次/分 ｜ 配速 5:25–5:35","19:05 开跑（约 40 分）","→ 19:55 练力量 A（25 分）","每组间慢跑 0.2 km（共 0.4 km）→ 19:55 练力量 A","节奏均匀不前快后慢；出门前 20 分洗鼻"],"strength":"A","test":null,"red":[],"notes":[]},{"date":"2027-01-01","dow":4,"dowName":"周五","week":7,"dateLabel":"1/1","type":"rest","zone":null,"title":"完全休息日","time":null,"km":0.0,"mn":0,"hr":null,"pace":null,"main":"全天休息 · 零跑步、零下肢力量","detail":["零跑步、零下肢力量","晚餐 17:30–18:00 吃七分饱"],"strength":null,"test":null,"red":["零跑步、零下肢力量"],"notes":["节日作息仍需守住入睡时间"]},{"date":"2027-01-02","dow":5,"dowName":"周六","week":7,"dateLabel":"1/2","type":"wake","zone":"E","title":"短程唤醒慢跑","time":"19:15–19:45","km":2.5,"mn":16,"hr":"135–150","pace":"6:05–6:35","main":"2.5 km 轻松唤醒慢跑（约 16 分钟）+ 拉伸","detail":["心率 135–150 次/分 ｜ 配速 6:05–6:35"],"strength":null,"test":null,"red":[],"notes":["19:15–19:45（严禁在周六练下肢力量）","全程可完整聊天，保持轻快"]},{"date":"2027-01-03","dow":6,"dowName":"周日","week":7,"dateLabel":"1/3","type":"long","zone":"E","title":"周末长距离 LSD","time":"19:00–20:15","km":9.0,"mn":56,"hr":"135–150","pace":"6:05–6:35","main":"9.0 km 周末长距离 LSD（约 56 分钟）","detail":["心率 135–150 次/分 ｜ 配速 6:05–6:35","19:00 准时开跑 · 较上周增加 0.5 km","严格压住心率，步频守住 180 步/分"],"strength":null,"test":null,"red":[],"notes":[]}]},{"n":8,"start":"2027-01-04","end":"2027-01-10","phase":"巩固期","label":"减量与 5K 测验②周","km":21.0,"change":"-8.7% 减量","days":[{"date":"2027-01-04","dow":0,"dowName":"周一","week":8,"dateLabel":"1/4","type":"rest","zone":null,"title":"完全休息日","time":"20:00–20:20","km":0.0,"mn":12,"hr":null,"pace":null,"main":"零路跑 · 泡沫轴轻滚放松 + 腹式呼吸","detail":["泡沫轴轻滚 15 分钟（含 5 分钟腹式呼吸）"],"strength":null,"test":null,"red":["不路跑、不练力量"],"notes":["本周全力减量蓄力，迎接周日 5K 测验","20:00–20:20（本周暂停力量 A 与 B）"]},{"date":"2027-01-05","dow":1,"dowName":"周二","week":8,"dateLabel":"1/5","type":"easy","zone":"E","title":"轻松跑（停力量 B）","time":"19:10–20:15","km":4.5,"mn":29,"hr":"135–150","pace":"6:05–6:35","main":"4.5 km 轻松跑（约 29 分钟）+ 4×80 米顺畅跑","detail":["心率 135–150 次/分 ｜ 配速 6:05–6:35","19:10 开跑","80 米约 22 秒/趟（走休 60 秒），步频 180","本周停练力量 B，跑完拉伸即结束"],"strength":null,"test":null,"red":[],"notes":[]},{"date":"2027-01-06","dow":2,"dowName":"周三","week":8,"dateLabel":"1/6","type":"rest","zone":null,"title":"完全休息日","time":null,"km":0.0,"mn":0,"hr":null,"pace":null,"main":"全天休息 · 零跑步、零下肢力量","detail":["零跑步、零下肢力量","晚餐 17:30–18:00 吃七分饱"],"strength":null,"test":null,"red":["零跑步、零下肢力量"],"notes":["正常饮食，保证充足睡眠","周四降为温和稳态跑"]},{"date":"2027-01-07","dow":3,"dowName":"周四","week":8,"dateLabel":"1/7","type":"quality","zone":"M","title":"赛前稳态（停力量 A）","time":"19:05–20:20","km":5.5,"mn":34,"hr":"152–164","pace":"5:55–6:10","main":"共 5.5 km：1.5 km E 区 + 3.0 km M 区 @ 5:55–6:10 + 1.0 km E 区","detail":["心率 152–164 次/分 ｜ 配速 5:55–6:10","19:05 开跑（约 34 分）","跑完即结束，不练力量","不拼速度，留足体能给周日 5K 测验"],"strength":null,"test":null,"red":[],"notes":[]},{"date":"2027-01-08","dow":4,"dowName":"周五","week":8,"dateLabel":"1/8","type":"rest","zone":null,"title":"完全休息日","time":null,"km":0.0,"mn":0,"hr":null,"pace":null,"main":"全天休息 · 零跑步、零下肢力量","detail":["零跑步、零下肢力量","晚餐 17:30–18:00 吃七分饱"],"strength":null,"test":null,"red":["零跑步、零下肢力量"],"notes":["检查跑步动态传感器电量","第 8 周可同步体检复查铁蛋白/维生素 D"]},{"date":"2027-01-09","dow":5,"dowName":"周六","week":8,"dateLabel":"1/9","type":"wake","zone":"E","title":"短程唤醒慢跑","time":"19:15–19:45","km":2.0,"mn":13,"hr":"135–150","pace":"6:05–6:35","main":"2.0 km 轻松唤醒慢跑（约 13 分钟）+ 拉伸","detail":["心率 135–150 次/分 ｜ 配速 6:05–6:35"],"strength":null,"test":null,"red":[],"notes":["19:15–19:45 · 严禁练下肢力量","活动开筋骨即停，早点休息"]},{"date":"2027-01-10","dow":6,"dowName":"周日","week":8,"dateLabel":"1/10","type":"test","zone":"I","title":"5 公里阶段测验 ②","time":"19:00–20:15","km":9.0,"mn":53,"hr":"178–190","pace":"4:55–5:05","main":"共 9.0 km：2k 热身 + 5.0 km 全力测验 + 2k 冷身","detail":["心率 178–190 次/分 ｜ 配速 4:55–5:05","19:00 开跑（详细分段流程见测验卡）","目标 ≤ 24 分 30 秒，无痛解锁 W9–12 新配速"],"strength":null,"test":"w8","red":[],"notes":[]}]},{"n":9,"start":"2027-01-11","end":"2027-01-17","phase":"强化期","label":"含全周期唯一间歇课","km":23.0,"change":"+9.5%","days":[{"date":"2027-01-11","dow":0,"dowName":"周一","week":9,"dateLabel":"1/11","type":"rest","zone":null,"title":"完全休息日","time":"20:00–20:20","km":0.0,"mn":12,"hr":null,"pace":null,"main":"零路跑 · 泡沫轴轻滚放松 + 腹式呼吸","detail":["泡沫轴轻滚 15 分钟（含 5 分钟腹式呼吸）"],"strength":null,"test":null,"red":["不路跑、不练力量"],"notes":["晨起空腹称重；本周恢复力量 A 与 B"]},{"date":"2027-01-12","dow":1,"dowName":"周二","week":9,"dateLabel":"1/12","type":"easy","zone":"E","title":"轻松跑 + 力量 B","time":"19:10–20:15","km":5.0,"mn":31,"hr":"135–150","pace":"5:55–6:25","main":"5.0 km 轻松跑（约 31 分钟）+ 6×80 米顺畅跑","detail":["心率 135–150 次/分 ｜ 配速 5:55–6:25","19:10 开跑 → 19:55 练力量 B（20 分）","80 米约 21 秒/趟（走休 60 秒），步频 180"],"strength":"B","test":null,"red":[],"notes":[]},{"date":"2027-01-13","dow":2,"dowName":"周三","week":9,"dateLabel":"1/13","type":"rest","zone":null,"title":"完全休息日","time":null,"km":0.0,"mn":0,"hr":null,"pace":null,"main":"全天休息 · 零跑步、零下肢力量","detail":["零跑步、零下肢力量","晚餐 17:30–18:00 吃七分饱"],"strength":null,"test":null,"red":["零跑步、零下肢力量"],"notes":["周四高强度间歇前 48 小时恢复窗口","保证充足碳水储备"]},{"date":"2027-01-14","dow":3,"dowName":"周四","week":9,"dateLabel":"1/14","type":"quality","zone":"I","title":"有氧间歇跑 + 力量 A","time":"19:05–20:20","km":6.0,"mn":36,"hr":"178–190","pace":"4:48–4:55","main":"共 6.0 km：1.5 km E + 4 × 0.8 km I 区 @ 4:48–4:55［组间慢跑 0.2 km×3］ + 0.7 km E","detail":["心率 178–190 次/分 ｜ 配速 4:48–4:55","19:05 开跑（约 36 分）","→ 19:55 练力量 A（25 分）","每组间慢跑 0.2 km（共 0.6 km）→ 19:55 练力量 A","很吃力但可控（约 5K 比赛速），全周期仅本周"],"strength":"A","test":null,"red":[],"notes":[]},{"date":"2027-01-15","dow":4,"dowName":"周五","week":9,"dateLabel":"1/15","type":"rest","zone":null,"title":"完全休息日","time":null,"km":0.0,"mn":0,"hr":null,"pace":null,"main":"全天休息 · 零跑步、零下肢力量","detail":["零跑步、零下肢力量","晚餐 17:30–18:00 吃七分饱"],"strength":null,"test":null,"red":["零跑步、零下肢力量"],"notes":["彻底消退间歇课与离心力量疲劳"]},{"date":"2027-01-16","dow":5,"dowName":"周六","week":9,"dateLabel":"1/16","type":"wake","zone":"E","title":"短程唤醒慢跑","time":"19:15–19:45","km":2.5,"mn":15,"hr":"135–150","pace":"5:55–6:25","main":"2.5 km 轻松唤醒慢跑（约 15 分钟）+ 拉伸","detail":["心率 135–150 次/分 ｜ 配速 5:55–6:25"],"strength":null,"test":null,"red":[],"notes":["19:15–19:45（严禁在周六练下肢力量）","全程可完整聊天，步频约 180 步/分"]},{"date":"2027-01-17","dow":6,"dowName":"周日","week":9,"dateLabel":"1/17","type":"long","zone":"E","title":"周末长距离 LSD","time":"19:00–20:15","km":9.5,"mn":58,"hr":"135–150","pace":"5:55–6:25","main":"9.5 km 周末长距离 LSD（约 58 分钟）","detail":["心率 135–150 次/分 ｜ 配速 5:55–6:25","19:00 准时开跑 · 较上周增加 0.5 km","严格压住心率，训后 30 分内补餐"],"strength":null,"test":null,"red":[],"notes":[]}]},{"n":10,"start":"2027-01-18","end":"2027-01-24","phase":"强化期","label":"长阈值 + 首破 10 公里","km":25.0,"change":"+8.7%","days":[{"date":"2027-01-18","dow":0,"dowName":"周一","week":10,"dateLabel":"1/18","type":"rest","zone":null,"title":"完全休息日","time":"20:00–20:20","km":0.0,"mn":12,"hr":null,"pace":null,"main":"零路跑 · 泡沫轴轻滚放松 + 腹式呼吸","detail":["泡沫轴轻滚 15 分钟（含 5 分钟腹式呼吸）"],"strength":null,"test":null,"red":["不路跑、不练力量"],"notes":["晨起空腹称重；本周日起单次超 60 分钟"]},{"date":"2027-01-19","dow":1,"dowName":"周二","week":10,"dateLabel":"1/19","type":"easy","zone":"E","title":"轻松跑 + 力量 B","time":"19:10–20:15","km":5.0,"mn":31,"hr":"135–150","pace":"5:55–6:25","main":"5.0 km 轻松跑（约 31 分钟）+ 6×80 米顺畅跑","detail":["心率 135–150 次/分 ｜ 配速 5:55–6:25","19:10 开跑 → 19:55 练力量 B（20 分）","80 米约 21 秒/趟（走休 60 秒），步频 180"],"strength":"B","test":null,"red":[],"notes":[]},{"date":"2027-01-20","dow":2,"dowName":"周三","week":10,"dateLabel":"1/20","type":"rest","zone":null,"title":"完全休息日","time":null,"km":0.0,"mn":0,"hr":null,"pace":null,"main":"全天休息 · 零跑步、零下肢力量","detail":["零跑步、零下肢力量","晚餐 17:30–18:00 吃七分饱"],"strength":null,"test":null,"red":["零跑步、零下肢力量"],"notes":["周四长阈值前 48 小时完整恢复窗口","全天碳水 250–350g、蛋白 70–80g"]},{"date":"2027-01-21","dow":3,"dowName":"周四","week":10,"dateLabel":"1/21","type":"quality","zone":"T","title":"阈值长巡航 + 力量 A","time":"19:05–20:20","km":6.5,"mn":38,"hr":"166–176","pace":"5:20–5:30","main":"共 6.5 km：1.5 km E + 2 × 2.0 km T 区 @ 5:20–5:30［组间慢跑 0.3 km×1］ + 0.7 km E","detail":["心率 166–176 次/分 ｜ 配速 5:20–5:30","19:05 开跑（约 38 分）","→ 19:55 练力量 A（25 分）","两组间慢跑 0.3 km → 19:55 练力量 A（25 分）","锻炼抗疲劳耐力；出门前 20 分盐水洗鼻"],"strength":"A","test":null,"red":[],"notes":[]},{"date":"2027-01-22","dow":4,"dowName":"周五","week":10,"dateLabel":"1/22","type":"rest","zone":null,"title":"完全休息日","time":null,"km":0.0,"mn":0,"hr":null,"pace":null,"main":"全天休息 · 零跑步、零下肢力量","detail":["零跑步、零下肢力量","晚餐 17:30–18:00 吃七分饱"],"strength":null,"test":null,"red":["零跑步、零下肢力量"],"notes":["准备好周日途中补水用的小水壶/补给点"]},{"date":"2027-01-23","dow":5,"dowName":"周六","week":10,"dateLabel":"1/23","type":"wake","zone":"E","title":"短程唤醒慢跑","time":"19:15–19:45","km":3.0,"mn":18,"hr":"135–150","pace":"5:55–6:25","main":"3.0 km 轻松唤醒慢跑（约 18 分钟）+ 拉伸","detail":["心率 135–150 次/分 ｜ 配速 5:55–6:25"],"strength":null,"test":null,"red":[],"notes":["19:15–19:45（严禁在周六练下肢力量）","全程可完整聊天，保持轻松"]},{"date":"2027-01-24","dow":6,"dowName":"周日","week":10,"dateLabel":"1/24","type":"long","zone":"M","title":"渐进长距离（超 10K）","time":"19:00–20:15","km":10.5,"mn":63,"hr":"152–164","pace":"5:40–5:55","main":"共 10.5 km（约 63 分）：前 8.5k 轻松 + 后 2.0k 稳态","detail":["心率 152–164 次/分 ｜ 配速 5:40–5:55","前 8.5k 配 5:55–6:25；后 2k 提速 5:40–5:55","19:00 开跑 · 第 35–40 分（约 6km）补水 150ml"],"strength":null,"test":null,"red":[],"notes":[]}]},{"n":11,"start":"2027-01-25","end":"2027-01-31","phase":"强化期","label":"全周期峰值周","km":27.0,"change":"+8.0% 峰值","days":[{"date":"2027-01-25","dow":0,"dowName":"周一","week":11,"dateLabel":"1/25","type":"rest","zone":null,"title":"完全休息日","time":"20:00–20:20","km":0.0,"mn":12,"hr":null,"pace":null,"main":"零路跑 · 泡沫轴轻滚放松 + 腹式呼吸","detail":["泡沫轴轻滚 15 分钟（含 5 分钟腹式呼吸）"],"strength":null,"test":null,"red":["不路跑、不练力量"],"notes":["晨起空腹称重；峰值周务必保证碳水摄入"]},{"date":"2027-01-26","dow":1,"dowName":"周二","week":11,"dateLabel":"1/26","type":"easy","zone":"E","title":"轻松跑 + 力量 B","time":"19:10–20:15","km":5.5,"mn":34,"hr":"135–150","pace":"5:55–6:25","main":"5.5 km 轻松跑（约 34 分钟）+ 6×80 米顺畅跑","detail":["心率 135–150 次/分 ｜ 配速 5:55–6:25","19:10 开跑 → 19:55 练力量 B（20 分）","80 米约 21 秒/趟（走休 60 秒），步频 180"],"strength":"B","test":null,"red":[],"notes":[]},{"date":"2027-01-27","dow":2,"dowName":"周三","week":11,"dateLabel":"1/27","type":"rest","zone":null,"title":"完全休息日","time":null,"km":0.0,"mn":0,"hr":null,"pace":null,"main":"全天休息 · 零跑步、零下肢力量","detail":["零跑步、零下肢力量","晚餐 17:30–18:00 吃七分饱"],"strength":null,"test":null,"red":["零跑步、零下肢力量"],"notes":["周四 10K 专项课前 48 小时恢复窗口","全天碳水 300–350g，为峰值负荷蓄能"]},{"date":"2027-01-28","dow":3,"dowName":"周四","week":11,"dateLabel":"1/28","type":"quality","zone":"GP","title":"10K 专项课 + 力量 A减半","time":"19:05–20:20","km":7.0,"mn":41,"hr":"174–182","pace":"5:10–5:18","main":"共 7.0 km：1.5 km E + 3 × 1.5 km GP 配速 @ 5:10–5:18［组间慢跑 0.25 km×2］ + 0.5 km E","detail":["心率 174–182 次/分 ｜ 配速 5:10–5:18","19:05 开跑（约 41 分）","→ 19:55 练力量 A（25 分）","每组间慢跑 0.25 km（共 0.5 km）→ 19:55 力量 A 减半","提前演练 10 公里目标节奏，专注 180 步频"],"strength":"A","test":null,"red":[],"notes":[]},{"date":"2027-01-29","dow":4,"dowName":"周五","week":11,"dateLabel":"1/29","type":"rest","zone":null,"title":"完全休息日","time":null,"km":0.0,"mn":0,"hr":null,"pace":null,"main":"全天休息 · 零跑步、零下肢力量","detail":["零跑步、零下肢力量","晚餐 17:30–18:00 吃七分饱"],"strength":null,"test":null,"red":["零跑步、零下肢力量"],"notes":["消退周四高强度负荷，早睡恢复"]},{"date":"2027-01-30","dow":5,"dowName":"周六","week":11,"dateLabel":"1/30","type":"wake","zone":"E","title":"短程唤醒慢跑","time":"19:15–19:45","km":3.0,"mn":18,"hr":"135–150","pace":"5:55–6:25","main":"3.0 km 轻松唤醒慢跑（约 18 分钟）+ 拉伸","detail":["心率 135–150 次/分 ｜ 配速 5:55–6:25"],"strength":null,"test":null,"red":[],"notes":["19:15–19:45（严禁在周六练下肢力量）","全程可完整聊天，储备体能"]},{"date":"2027-01-31","dow":6,"dowName":"周日","week":11,"dateLabel":"1/31","type":"long","zone":"E","title":"峰值长距离（破纪录）","time":"19:00–20:15","km":11.5,"mn":70,"hr":"135–150","pace":"5:55–6:25","main":"11.5 km 峰值长距离（破纪录）（约 70 分钟）","detail":["心率 135–150 次/分 ｜ 配速 5:55–6:25","19:00 准时开跑 · 第 35–40 分（约 6km）补水 150ml","安全突破 11.3km 最长纪录，严禁前半程抢快"],"strength":null,"test":null,"red":[],"notes":[]}]},{"n":12,"start":"2027-02-01","end":"2027-02-07","phase":"减量检验","label":"赛前减量与 10 公里检验③周","km":21.5,"change":"-20.4% 减量","days":[{"date":"2027-02-01","dow":0,"dowName":"周一","week":12,"dateLabel":"2/1","type":"rest","zone":null,"title":"完全休息日","time":"20:00–20:20","km":0.0,"mn":12,"hr":null,"pace":null,"main":"零路跑 · 泡沫轴轻滚放松 + 腹式呼吸","detail":["泡沫轴轻滚 15 分钟（含 5 分钟腹式呼吸）"],"strength":null,"test":null,"red":["不路跑、不练力量"],"notes":["跑量回撤 20.4%，让肌肉糖原完全回满","20:00–20:20（本周全面停练力量 A 与 B）"]},{"date":"2027-02-02","dow":1,"dowName":"周二","week":12,"dateLabel":"2/2","type":"easy","zone":"E","title":"轻松跑（停力量 B）","time":"19:10–20:15","km":4.5,"mn":28,"hr":"135–150","pace":"5:55–6:25","main":"4.5 km 轻松跑（约 28 分钟）+ 4×80 米顺畅跑","detail":["心率 135–150 次/分 ｜ 配速 5:55–6:25","19:10 开跑","80 米约 21 秒/趟（走休 60 秒），步频 180","本周停练力量 B，跑完拉伸即结束"],"strength":null,"test":null,"red":[],"notes":[]},{"date":"2027-02-03","dow":2,"dowName":"周三","week":12,"dateLabel":"2/3","type":"rest","zone":null,"title":"完全休息日","time":null,"km":0.0,"mn":0,"hr":null,"pace":null,"main":"全天休息 · 零跑步、零下肢力量","detail":["零跑步、零下肢力量","晚餐 17:30–18:00 吃七分饱"],"strength":null,"test":null,"red":["零跑步、零下肢力量"],"notes":["保证充足碳水与睡眠","周四做最后一次短程比赛配速唤醒"]},{"date":"2027-02-04","dow":3,"dowName":"周四","week":12,"dateLabel":"2/4","type":"quality","zone":"GP","title":"赛前唤醒（停力量 A）","time":"19:05–20:20","km":4.5,"mn":27,"hr":"174–182","pace":"5:10–5:18","main":"共 4.5 km：2.0 km E + 2 × 0.8 km GP 配速 @ 5:10–5:18［组间慢跑 0.2 km×1］ + 0.7 km E","detail":["心率 174–182 次/分 ｜ 配速 5:10–5:18","19:05 开跑（约 27 分）","跑完即结束，不练力量","两组间慢跑 0.2 km · 跑完即结束，不练力量","找到比赛配速脚感即收工，绝不多跑"],"strength":null,"test":null,"red":[],"notes":[]},{"date":"2027-02-05","dow":4,"dowName":"周五","week":12,"dateLabel":"2/5","type":"rest","zone":null,"title":"完全休息日","time":null,"km":0.0,"mn":0,"hr":null,"pace":null,"main":"全天休息 · 零跑步、零下肢力量","detail":["零跑步、零下肢力量","晚餐 17:30–18:00 吃七分饱"],"strength":null,"test":null,"red":["零跑步、零下肢力量"],"notes":["检查手表与跑步动态传感器","三餐正常摄入米饭面条等优质碳水","避免生冷辛辣，防肠胃与鼻炎波动"]},{"date":"2027-02-06","dow":5,"dowName":"周六","week":12,"dateLabel":"2/6","type":"rest","zone":null,"title":"完全休息日（备赛周日长距离）","time":null,"km":0.0,"mn":0,"hr":null,"pace":null,"main":"0.0 km · 全天休息","detail":["严禁任何下肢力量训练","为周日长距离储备体力"],"strength":null,"test":null,"red":["严禁在周六安排任何下肢力量训练"],"notes":["全天完全休息（第 12 周周六全休）","准备好明日途中补水用的 150 ml 温水"]},{"date":"2027-02-07","dow":6,"dowName":"周日","week":12,"dateLabel":"2/7","type":"test","zone":"GP","title":"10 公里成果检验 ③","time":"19:00–20:15","km":12.5,"mn":72,"hr":"174–182","pace":"5:10–5:18","main":"共 12.5 km：1.5k 热身 + 10.0 km 检验跑 + 1k 冷身","detail":["心率 174–182 次/分 ｜ 配速 5:10–5:18","19:00 开跑 · 第 35–40 分（约 6km）补水 150ml","1–3K 压在 5:16–5:20，后程靠摆臂守住 ≥180 步频"],"strength":null,"test":"w12","red":[],"notes":[]}]}]};
+const DAYS = PLAN.weeks.flatMap(w => w.days);
+const ZC = {E:'#34d399',M:'#60a5fa',T:'#fbbf24',GP:'#f87171',I:'#a78bfa',ST:'#22d3ee'};
+const ZNAME = {E:'E 区',M:'M 区',T:'T 区',GP:'GP',I:'I 区',ST:'ST'};
+const LS = 'runkit.v1';
+const DEF = {tab:'today', city:null, weather:true, hrvBase:97, rhrBase:55, checks:{}, daily:{}, seen:{} };
+
+let S = load();
+let cache = { weather:null, at:0, dayKey:null };
+let curSheet = null;
+
+function load(){
+  try{ const o = JSON.parse(localStorage.getItem(LS)||'{}'); return Object.assign({}, DEF, o); }
+  catch(e){ return Object.assign({}, DEF); }
+}
+function save(){ try{ localStorage.setItem(LS, JSON.stringify(S)); }catch(e){} }
+
+/* ---------- 日期 ---------- */
+function pad(n){ return n<10 ? '0'+n : ''+n; }
+function iso(d){ return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate()); }
+function parseISO(s){ const p = s.split('-').map(Number); return new Date(p[0], p[1]-1, p[2]); }
+function todayISO(){ return iso(new Date()); }
+function addMin(hhmm, delta){
+  const p = hhmm.split(':').map(Number); let m = p[0]*60+p[1]+delta;
+  m = ((m % 1440) + 1440) % 1440;
+  return pad(Math.floor(m/60))+':'+pad(m%60);
+}
+function dayByDate(s){ return DAYS.find(d => d.date === s); }
+function diffDays(a,b){ return Math.round((parseISO(b)-parseISO(a))/86400000); }
+
+/* URL 预览：?date=2026-11-19 看某天，?tab=plan 直接进某页 */
+const Q = new URLSearchParams(location.search);
+const PREVIEW = Q.get('date');
+function curDate(){ return (PREVIEW && dayByDate(PREVIEW)) ? PREVIEW : todayISO(); }
+function isPreview(){ return !!(PREVIEW && dayByDate(PREVIEW) && PREVIEW !== todayISO()); }
+
+/* ---------- 状态闸门 ---------- */
+function verdict(){
+  const t = curDate();
+  const m = S.daily[t] || {};
+  const hrv = m.hrv, rhr = m.rhr;
+  const base = S.hrvBase || 97;
+  if(hrv==null || hrv==='') return {k:null, label:'未填写', tip:'填今天的 HRV 与静息心率，自动判断能不能照常跑', cls:'muted'};
+  if(m.pain) return {k:'red', label:'红灯 · 停跑 48 小时', cls:'bad',
+    tip:'出现按压痛/创口痛 → 零跑步、零力量，休息 48 小时后再评估'};
+  const r = hrv / base;
+  if(r <= 0.804 || (rhr && rhr >= 65)) return {k:'red', label:'红灯 · 停跑 48 小时', cls:'bad',
+    tip:'HRV 连续低于基线 1.5 个标准差 → 立即停跑休息 48 小时（零跑步、零力量）'};
+  if(r < 0.845 || (rhr && rhr >= 60)) return {k:'yellow', label:'黄灯 · 降级保护', cls:'warn',
+    tip:'质量课降级为 E 区轻松跑（心率 ≤148），取消附加力量训练'};
+  if(rhr && rhr <= 58) return {k:'green', label:'绿灯 · 照常跑', cls:'ok', tip:'身体恢复良好，严格按今天的课表执行'};
+  return {k:'yellow', label:'黄灯 · 留意静息心率', cls:'warn', tip:'静息心率略高于 58，今晚压住强度、取消力量'};
+}
+
+/* ---------- 天气 ---------- */
+function weatherAdvice(w, day){
+  if(!w || !w.ok) return null;
+  if(w.aqi!=null && w.aqi>120) return {cls:'bad', t:'空气指数 '+Math.round(w.aqi)+'（>120）：改室内力量或跳绳 5 分热身；仅鼻塞无发烧可慢跑 20–30 分钟'};
+  if(w.pop!=null && w.pop>=60) return {cls:'warn', t:'降水概率 '+w.pop+'%：改室内力量课；严禁补跑叠加，直接忽略今天这一课'};
+  if(w.code>=95) return {cls:'warn', t:'雷雨天气：改室内力量课，不要出门'};
+  if(w.feels!=null && w.feels<=5) return {cls:'warn', t:'体感 '+Math.round(w.feels)+'°C 偏冷：提前 20 分盐水洗鼻，前 10 分钟压到 6:30–6:50'};
+  if(w.feels!=null && w.feels>=28) return {cls:'warn', t:'体感 '+Math.round(w.feels)+'°C 偏热：以心率为锚，别看配速，必要时整体降 10 秒/km'};
+  if(day && day.type==='rest') return {cls:'ok', t:'今天休息日，不用管天气'};
+  return {cls:'ok', t:'天气条件正常，按课表出门'};
+}
+async function loadWeather(force){
+  if(!S.city || S.city.lat==null) return {ok:false, err:'未设置城市'};
+  const key = S.city.lat+','+S.city.lon;
+  if(!force && cache.weather && cache.dayKey===key && Date.now()-cache.at < 30*60*1000) return cache.weather;
+  const d = new Date(); const ymd = iso(d);
+  const base = 'latitude='+S.city.lat+'&longitude='+S.city.lon+'&timezone=Asia%2FShanghai';
+  const u1 = 'https://api.open-meteo.com/v1/forecast?'+base+'&hourly=temperature_2m,apparent_temperature,precipitation_probability,weather_code,wind_speed_10m&forecast_days=3';
+  const u2 = 'https://air-quality-api.open-meteo.com/v1/air-quality?'+base+'&hourly=pm2_5,european_aqi&forecast_days=3';
+  try{
+    const [r1,r2] = await Promise.all([fetch(u1), fetch(u2)]);
+    const a = await r1.json(); let b = {};
+    try{ b = await r2.json(); }catch(e){}
+    const idx = (a.hourly && a.hourly.time) ? a.hourly.time.indexOf(ymd+'T19:00') : -1;
+    if(idx < 0) return {ok:false, err:'天气数据缺 19:00 时段'};
+    const ai = (b.hourly && b.hourly.time) ? b.hourly.time.indexOf(ymd+'T19:00') : -1;
+    const w = {
+      ok:true,
+      temp:a.hourly.temperature_2m[idx], feels:a.hourly.apparent_temperature[idx],
+      pop:a.hourly.precipitation_probability ? a.hourly.precipitation_probability[idx] : null,
+      code:a.hourly.weather_code[idx],
+      wind:a.hourly.wind_speed_10m ? a.hourly.wind_speed_10m[idx] : null,
+      aqi:(ai>=0 && b.hourly.european_aqi) ? b.hourly.european_aqi[ai] : null,
+      pm:(ai>=0 && b.hourly.pm2_5) ? b.hourly.pm2_5[ai] : null
+    };
+    cache = { weather:w, at:Date.now(), dayKey:key };
+    return w;
+  }catch(e){ return {ok:false, err:'取天气失败（'+(e.message||'网络')+'）'}; }
+}
+
+/* ---------- 视图 ---------- */
+const app = document.getElementById('app');
+function f1(n){ return Number(n).toFixed(1); }
+function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+
+function render(){
+  const tab = S.tab || 'today';
+  [...document.querySelectorAll('#tabbar button')].forEach(b => b.classList.toggle('on', b.dataset.tab===tab));
+  if(tab==='today') app.innerHTML = viewToday();
+  else if(tab==='plan') app.innerHTML = viewPlan();
+  else if(tab==='log') app.innerHTML = viewLog();
+  else app.innerHTML = viewSet();
+  window.scrollTo({top:0});
+}
+
+function todayMeta(){
+  const t = curDate();
+  const st = PLAN.meta.start, en = PLAN.meta.end;
+  return {t, before: t < st, after: t > en, toStart: diffDays(t, st)};
+}
+
+function viewToday(){
+  const m = todayMeta();
+  const d = parseISO(m.t);
+  const week = ['周日','周一','周二','周三','周四','周五','周六'][d.getDay()];
+  const head = `<div class="top">
+      <div><div class="d1">${d.getMonth()+1} 月 ${d.getDate()} 日</div>
+      <div class="d2">${week}${m.before ? ' · 距开跑还有 '+m.toStart+' 天' : (m.after ? ' · 计划已结束' : '')}</div></div>
+      <div class="badge">${PLAN.meta.id.split('-').pop()}</div>
+    </div>`;
+
+  if(m.before){
+    const d1 = DAYS[0];
+    return head + `<div class="card tight" style="border-color:#2b3a52;background:linear-gradient(160deg,#141c29,#141922)">
+        <div class="row"><div class="sp" style="font-weight:700">计划明天开始 · 先看一眼第 1 天</div></div>
+        <div class="tiny" style="margin-top:4px">${PLAN.meta.start} → ${PLAN.meta.end} · 共 12 周 · 250.5 km</div>
+      </div>` + dayCard(d1, {preview:true}) + weekCard(d1) + footNote();
+  }
+  if(m.after) return head + `<div class="card">计划已于 ${PLAN.meta.end} 结束。去「记录」看完成情况，或把下一周期加进 plan.json。</div>` + footNote();
+
+  const day = dayByDate(m.t);
+  if(!day) return head + `<div class="card">今天（${m.t}）不在计划范围内。</div>` + footNote();
+  const pv = isPreview() ? `<div class="card tight" style="border-color:#2b3a52">
+      <div class="row"><div class="sp" style="font-size:13.5px">正在预览 ${esc(m.t)}（W${day.week} ${esc(day.dowName)}）</div>
+      <button class="btn sm" data-act="exitPreview">回到今天</button></div></div>` : '';
+  return head + pv + gateCard(day) + weatherCard(day) + dayCard(day) + timelineCard(day) + checkinCard(day) + weekCard(day) + footNote();
+}
+
+function zoneColor(z){ return ZC[z] || 'var(--REST)'; }
+
+function gateCard(){
+  const v = verdict();
+  const t = curDate();
+  const m = S.daily[t] || {};
+  const cls = v.k==='green' ? 'ok' : v.k==='yellow' ? 'warn' : v.k==='red' ? 'bad' : '';
+  return `<div class="card">
+    <div class="row" style="margin-bottom:9px"><b>今早状态</b><div class="sp"></div>
+      <span class="badge ${cls}">${esc(v.label)}</span></div>
+    <div class="grid2">
+      <div><label class="f">HRV / rMSSD（ms）</label>
+        <input type="number" inputmode="numeric" id="inHrv" value="${m.hrv!=null?m.hrv:''}" placeholder="${S.hrvBase}"></div>
+      <div><label class="f">静息心率（次/分）</label>
+        <input type="number" inputmode="numeric" id="inRhr" value="${m.rhr!=null?m.rhr:''}" placeholder="${S.rhrBase}"></div>
+    </div>
+    <div class="row" style="margin-top:9px;gap:6px">
+      <button class="btn sm ghost ${m.pain?'on':''}" data-act="pain">胫骨/跟腱按压痛</button>
+      <div class="sp"></div>
+      <button class="btn sm" data-act="gate">保存</button>
+    </div>
+    <div class="tiny" style="margin-top:9px;line-height:1.5">${esc(v.tip)}</div>
+  </div>`;
+}
+
+function weatherCard(day){
+  if(!S.weather) return '';
+  const w = cache.weather;
+  if(!S.city) return `<div class="card tight"><div class="row"><div class="sp muted">想看天气就先设城市</div>
+     <button class="btn sm" data-act="tab" data-tab="set">去设置</button></div></div>`;
+  if(!w || !w.ok) return `<div class="card tight"><div class="row"><div class="sp muted tiny">${esc((w&&w.err)||'点一下取今晚 19:00 的天气')}</div>
+     <button class="btn sm" data-act="wx">取天气</button></div></div>`;
+  const a = weatherAdvice(w, day);
+  const code = w.code>=95 ? '雷雨' : w.code>=80 ? '阵雨' : w.code>=61 ? '雨' : w.code>=45 ? '雾' : w.code>=3 ? '阴' : '晴';
+  return `<div class="card">
+    <div class="row"><b>今晚 19:00 · ${esc(S.city.name||'本地')}</b><div class="sp"></div>
+      <button class="btn sm ghost" data-act="wx">刷新</button></div>
+    <div class="wx">
+      <div class="kv"><div class="k">天气</div><div class="v">${code}</div></div>
+      <div class="kv"><div class="k">体感</div><div class="v">${w.feels==null?'—':Math.round(w.feels)+'°'}</div></div>
+      <div class="kv"><div class="k">降水</div><div class="v">${w.pop==null?'—':w.pop+'%'}</div></div>
+      <div class="kv"><div class="k">空气</div><div class="v">${w.aqi==null?'—':Math.round(w.aqi)}</div></div>
+    </div>
+    ${a?`<div class="advice ${a.cls}">${esc(a.t)}</div>`:''}
+  </div>`;
+}
+
+function statBox(k,v){ return `<div class="kv"><div class="k">${k}</div><div class="v">${v}</div></div>`; }
+
+function dayCard(day, opt){
+  const zc = zoneColor(day.zone);
+  const v = verdict();
+  const check = S.checks[day.date];
+  const adjust = (v.k==='red') ? 'bad' : (v.k==='yellow' && (day.strength || day.type==='quality' || day.type==='test')) ? 'warn' : '';
+  const st = check ? (check.status==='done'?'<span class="badge ok">已完成</span>':check.status==='downgrade'?'<span class="badge warn">降级完成</span>':'<span class="badge">已跳过</span>') : '';
+  const t = day.type;
+  const zoneLabel = t==='rest' ? '休息日' : (ZNAME[day.zone]||'训练');
+  return `<div class="hero" style="--zc:${zc}">
+    <div class="row"><div class="zt">${esc(zoneLabel)}${day.test?' · 测验日':''}</div><div class="sp"></div>${st}</div>
+    <div class="t">${esc(day.title)}</div>
+    <div class="m">${esc(day.main)}</div>
+    ${day.time?`<div class="tiny" style="margin-top:5px">${esc(day.time)}</div>`:''}
+    ${day.type==='rest'
+      ? `<div class="tiny" style="margin-top:10px">${esc((day.detail&&day.detail[0])||day.main)}</div>`
+      : `<div class="stats">
+          ${statBox('距离', f1(day.km)+' km')}
+          ${statBox('时长', (day.mn||'—')+' 分')}
+          ${statBox('心率', day.hr?day.hr+' 次/分':'不控')}
+          ${statBox('配速', day.pace?day.pace+' /km':'—')}
+        </div>`}
+    ${adjust==='warn'?`<div class="advice warn" style="margin-top:11px">黄灯：今天降级为 E 区（≤148 次/分），取消力量训练</div>`:''}
+    ${adjust==='bad'?`<div class="advice bad" style="margin-top:11px">红灯：立即停跑 48 小时（零跑步、零力量）</div>`:''}
+    <div class="row" style="margin-top:12px;gap:7px">
+      ${day.detail&&day.detail.length?`<button class="btn sm" data-act="day" data-date="${day.date}">详细安排</button>`:''}
+      ${day.strength?`<button class="btn sm" data-act="str" data-m="${day.strength}">力量 ${day.strength} 动作</button>`:''}
+      ${day.test?`<button class="btn sm" data-act="test" data-t="${day.test}">测验卡</button>`:''}
+    </div>
+  </div>`;
+}
+
+function timelineCard(day){
+  if(day.type==='rest' && !day.time) return '';
+  const st = day.time ? day.time.split('–')[0] : null;
+  const items = [];
+  if(day.type==='rest'){
+    items.push(['20:00','泡沫轴轻滚 15 分钟 + 5 分钟腹式呼吸']);
+    items.push(['20:20','睡觉准备 · 睡 ≥ 8 小时']);
+  }else{
+    if(st) items.push([addMin(st,-20),'等渗盐水洗鼻（出门前 20 分）']);
+    if(st) items.push([st,'开跑 · 前 10 分钟压慢至 6:30–6:50']);
+    if(day.strength) items.push(['19:55','力量 '+day.strength+'（'+(day.strength==='B'?'20':'25')+' 分钟）']);
+    items.push(['20:20','必须结束全部训练']);
+    items.push(['20:50','30 分内：补水 250ml + 碳水 30–40g + 蛋白 10–15g']);
+  }
+  return `<div class="card">
+    <div class="row" style="margin-bottom:6px"><b>今日时间线</b><div class="sp"></div>
+      <span class="tiny">红线：20:20 停训</span></div>
+    <div class="tl">${items.map(i=>`<div class="n"><span class="tm">${i[0]}</span><span class="tx">${esc(i[1])}</span></div>`).join('')}</div>
+  </div>`;
+}
+
+function checkinCard(day){
+  const c = S.checks[day.date] || {};
+  const done = !!c.status;
+  return `<div class="card">
+    <div class="row" style="margin-bottom:9px"><b>${done?'已打卡':'跑完打个卡'}</b><div class="sp"></div>
+      <span class="tiny">${done?'点一下改':'数据只存本机'}</span></div>
+    <div class="seg" id="segStatus">
+      <button data-act="ck" data-s="done" class="${c.status==='done'?'on':''}">完成</button>
+      <button data-act="ck" data-s="downgrade" class="${c.status==='downgrade'?'on':''}">降级完成</button>
+      <button data-act="ck" data-s="skip" class="${c.status==='skip'?'on':''}">跳过</button>
+    </div>
+    ${done?`<div class="feel" id="segFeel">
+      ${[1,2,3,4,5].map(i=>`<button data-act="feel" data-f="${i}" class="${c.feel===i?'on':''}">${['很轻松','轻松','正常','偏累','很累'][i-1]}</button>`).join('')}
+    </div>
+    <div style="margin-top:9px"><label class="f">备注（选填）</label>
+      <textarea id="inNote" placeholder="例：后 2km 心率偏高，小腿有点紧">${esc(c.note||'')}</textarea></div>
+    <div class="row" style="margin-top:8px"><div class="sp"></div><button class="btn sm" data-act="saveNote">保存备注</button></div>`:''}
+  </div>`;
+}
+
+function weekCard(day){
+  const w = PLAN.weeks[day.week-1];
+  if(!w) return '';
+  const days = w.days.filter(d => [1,3,5,6].includes(d.dow));
+  return `<div class="card">
+    <div class="row"><div><b>W${w.n} · ${esc(w.phase)}</b>
+      <div class="tiny">${esc(w.label)}</div></div><div class="sp"></div>
+      <div style="text-align:right"><b>${f1(w.km)} km</b><div class="tiny">${esc(w.change)}</div></div></div>
+    <div class="days">
+      ${days.map(d=>`<div class="dbtn ${d.type==='rest'?'off':''}" data-act="day" data-date="${d.date}">
+        <div class="w">${d.dowName.slice(1)}</div>
+        <div class="v">${d.km?f1(d.km):'休'}</div>
+        <div class="z" style="background:${zoneColor(d.zone)}"></div>
+      </div>`).join('')}
+    </div>
+  </div>`;
+}
+
+function footNote(){
+  return `<footer class="foot">${esc(PLAN.meta.id)} · 数据仅存本机 · 非医疗建议</footer>`;
+}
+
+/* ---------- 12 周 ---------- */
+function viewPlan(){
+  const done = Object.keys(S.checks).length;
+  const totalKm = 250.5;
+  const doneKm = DAYS.filter(d=>S.checks[d.date] && S.checks[d.date].status!=='skip').reduce((a,b)=>a+b.km,0);
+  const pct = Math.min(100, doneKm/totalKm*100);
+  return `<div class="top"><div><div class="d1">12 周课表</div>
+      <div class="d2">${PLAN.meta.start} → ${PLAN.meta.end}</div></div></div>
+    <div class="card tight">
+      <div class="row"><div class="sp tiny">已完成 <b style="color:var(--tx)">${doneKm.toFixed(1)}</b> / ${totalKm} km · ${done} 次打卡</div>
+        <div class="tiny">${pct.toFixed(0)}%</div></div>
+      <div class="prog"><i style="width:${pct}%"></i></div>
+    </div>` + PLAN.weeks.map(w=>{
+      const days = w.days.filter(d=>[1,3,5,6].includes(d.dow));
+      return `<div class="card">
+        <div class="wkhead"><div class="n">W${w.n}</div>
+          <div><div style="font-size:13.5px;font-weight:600">${esc(w.phase)}</div>
+          <div class="wksum">${esc(w.label)}</div></div>
+          <div class="sp"></div>
+          <div style="text-align:right"><b>${f1(w.km)}</b><div class="tiny">${esc(w.change)}</div></div></div>
+        <div class="days">
+          ${days.map(d=>{
+            const c = S.checks[d.date];
+            const mark = c ? (c.status==='skip'?'<div class="done" style="color:var(--tx3)">跳过</div>':`<div class="done">✓</div>`) : '';
+            return `<div class="dbtn ${d.type==='rest'?'off':''}" data-act="day" data-date="${d.date}">
+              <div class="w">${d.dateLabel}</div>
+              <div class="v">${d.km?f1(d.km)+'k':'休'}</div>
+              ${mark}
+              <div class="z" style="background:${zoneColor(d.zone)}"></div>
+            </div>`;
+          }).join('')}
+        </div>
+      </div>`;
+    }).join('') + `<div class="card tight tiny">跑量、配速、心率区间均来自 ENDURANCE-PLAN-2026-V2.1（250.5 km 已核验）。点任意一天看当天安排。</div>`;
+}
+
+/* ---------- 记录 ---------- */
+function viewLog(){
+  const rows = DAYS.filter(d => S.checks[d.date]).sort((a,b)=> a.date<b.date?1:-1);
+  const doneKm = rows.filter(r=>S.checks[r.date].status!=='skip').reduce((a,b)=>a+b.km,0);
+  const nDone = rows.filter(r=>S.checks[r.date].status==='done').length;
+  const nDown = rows.filter(r=>S.checks[r.date].status==='downgrade').length;
+  const nSkip = rows.filter(r=>S.checks[r.date].status==='skip').length;
+  return `<div class="top"><div><div class="d1">记录</div><div class="d2">共 ${rows.length} 条</div></div></div>
+    <div class="card"><div class="grid4">
+      ${statBox('完成', nDone)}${statBox('降级', nDown)}${statBox('跳过', nSkip)}${statBox('里程', doneKm.toFixed(1)+'k')}
+    </div></div>
+    ${rows.length? rows.map(d=>{
+      const c = S.checks[d.date];
+      const badge = c.status==='done'?'ok':c.status==='downgrade'?'warn':'';
+      const label = c.status==='done'?'完成':c.status==='downgrade'?'降级完成':'跳过';
+      return `<div class="card tight" data-act="day" data-date="${d.date}">
+        <div class="row"><div class="dot" style="background:${zoneColor(d.zone)}"></div>
+          <div class="sp"><div class="nm">${esc(d.title)}</div>
+          <div class="ds">W${d.week} · ${d.dateLabel} ${d.dowName}${d.km?' · '+f1(d.km)+' km':''}${c.feel?' · '+['很轻松','轻松','正常','偏累','很累'][c.feel-1]:''}</div></div>
+          <span class="badge ${badge}">${label}</span></div>
+        ${c.note?`<div class="tiny" style="margin-top:6px">${esc(c.note)}</div>`:''}
+      </div>`;
+    }).join('') : `<div class="card muted">还没有打卡记录。跑完在「今天」点一下完成就行。</div>`}
+    <div class="card tight"><div class="row"><div class="sp tiny">换手机或清缓存前，先导出备份</div>
+      <button class="btn sm" data-act="export">导出</button></div></div>`;
+}
+
+/* ---------- 设置 ---------- */
+function viewSet(){
+  const c = S.city || {};
+  return `<div class="top"><div><div class="d1">设置</div><div class="d2">数据只存在这台设备</div></div></div>
+    <div class="card">
+      <b>城市（用于天气）</b>
+      <div class="tiny" style="margin:4px 0 8px">不需要定位权限：输入城市名，用公开地理编码接口换算坐标</div>
+      <div class="row"><input type="text" id="inCity" value="${esc(c.name||'')}" placeholder="例：杭州">
+        <button class="btn sm" data-act="findCity">查找</button></div>
+      <div class="tiny" style="margin-top:7px">${c.lat!=null?'当前：'+esc(c.name||'')+'（'+c.lat.toFixed(2)+', '+c.lon.toFixed(2)+'）':'尚未设置'}</div>
+    </div>
+    <div class="card">
+      <div class="row"><div class="sp"><b>天气与空气</b><div class="tiny">每次打开取当晚 19:00 的预报，失败不影响课表</div></div>
+        <button class="btn sm ${S.weather?'on':''}" data-act="toggleWx">${S.weather?'已开':'已关'}</button></div>
+    </div>
+    <div class="card">
+      <b>个人基线</b>
+      <div class="grid2" style="margin-top:8px">
+        <div><label class="f">HRV 基线（ms）</label><input type="number" id="inHrvBase" value="${S.hrvBase}"></div>
+        <div><label class="f">静息心率（次/分）</label><input type="number" id="inRhrBase" value="${S.rhrBase}"></div>
+      </div>
+      <div class="row" style="margin-top:9px"><div class="sp"></div><button class="btn sm" data-act="saveBase">保存</button></div>
+      <div class="tiny" style="margin-top:7px">黄灯：低于基线 15% 或静息 ≥60 → 降为 E 区；红灯：低于 1.5 个标准差（约 97→78）→ 停 48 小时</div>
+    </div>
+    <div class="card">
+      <b>备份</b>
+      <div class="row" style="margin-top:8px;gap:7px">
+        <button class="btn sm" data-act="export">导出 JSON</button>
+        <button class="btn sm" data-act="import">导入</button>
+        <div class="sp"></div>
+        <button class="btn sm ghost" data-act="reset">清空打卡</button>
+      </div>
+    </div>
+    <div class="card">
+      <b>关于</b>
+      <ul class="tips">
+        <li>${esc(PLAN.meta.id)} · 250.5 km / 12 周 / 84 天</li>
+        <li>课表来自《12周跑步恢复与进阶执行手册》《随身口袋手册》《技术评估档案》</li>
+        <li>本工具只做提醒与记录，不构成医疗或训练诊断建议</li>
+      </ul>
+    </div>
+    <div class="card tight">
+      <div class="row"><div class="sp tiny">加下一周期：编辑 plan.json 的 weeks 数组后重新构建</div></div>
+    </div>
+    ${footNote()}`;
+}
+
+/* ---------- 弹层 ---------- */
+function openSheet(html){
+  document.getElementById('sheetBody').innerHTML = html;
+  document.getElementById('mask').classList.add('on');
+  document.getElementById('sheet').classList.add('on');
+}
+function closeSheet(){
+  document.getElementById('mask').classList.remove('on');
+  document.getElementById('sheet').classList.remove('on');
+}
+function showDay(date){
+  const d = dayByDate(date);
+  if(!d) return;
+  const c = S.checks[d.date];
+  const w = PLAN.weeks[d.week-1];
+  const test = d.test ? PLAN.tests[d.test] : null;
+  openSheet(`<h3>${esc(d.title)}</h3>
+    <div class="tiny">W${d.week} · ${d.date} ${d.dowName}${d.hr?' · 心率 '+d.hr:''}</div>
+    <div class="hero" style="--zc:${zoneColor(d.zone)};margin-top:12px">
+      <div class="zt">${d.type==='rest'?'休息日':(ZNAME[d.zone]||'训练')}</div>
+      <div class="t" style="font-size:17px">${esc(d.main)}</div>
+      <div class="stats">${statBox('距离', d.km?d.km+' km':'—')}${statBox('时长', d.mn?d.mn+' 分':'—')}${statBox('心率', d.hr||'—')}${statBox('配速', d.pace||'—')}</div>
+    </div>
+    ${d.detail&&d.detail.length?`<b>怎么做</b><ul class="tips">${d.detail.map(x=>`<li>${esc(x)}</li>`).join('')}</ul>`:''}
+    ${d.notes&&d.notes.length?`<hr class="hr"><b>注意</b><ul class="tips">${d.notes.map(x=>`<li>${esc(x)}</li>`).join('')}</ul>`:''}
+    ${d.red&&d.red.length?`<hr class="hr"><b>红线</b><ul class="tips">${d.red.map(x=>`<li style="color:var(--bad)">${esc(x)}</li>`).join('')}</ul>`:''}
+    ${test?`<hr class="hr"><b>${esc(test.name)}</b>
+      <ul class="tips"><li>${esc(test.structure)}</li><li>${esc(test.splits)}</li>
+      <li style="color:var(--ok)">${esc(test.target)}</li>${test.extra.map(x=>`<li>${esc(x)}</li>`).join('')}</ul>`:''}
+    ${d.strength?`<hr class="hr"><button class="btn sm" data-act="str" data-m="${d.strength}">看力量 ${d.strength} 动作</button>`:''}
+    <div class="row" style="margin-top:14px"><div class="sp tiny">${esc(w.phase)} · 本周 ${f1(w.km)} km</div>
+      <button class="btn sm primary" data-act="closesheet">关闭</button></div>`);
+}
+function showStrength(m){
+  const s = PLAN.strengths[m];
+  openSheet(`<h3>${esc(s.name)}</h3>
+    <div class="tiny">${esc(s.slot)} · ${esc(s.focus)}</div>
+    <div style="margin-top:12px">
+      ${s.items.map((it,i)=>`<div class="card tight" style="margin-bottom:8px">
+        <div class="row"><b>${i+1}. ${esc(it.n)}</b></div>
+        <div class="tiny" style="margin-top:3px">${esc(it.tip)}</div>
+        <div style="margin-top:6px;font-size:13px;color:var(--tx2)">${esc(it.sets)}</div>
+        <div style="margin-top:5px;font-size:12.5px;color:var(--warn)">不适替换：${esc(it.alt)}</div>
+      </div>`).join('')}
+    </div>
+    <hr class="hr"><b>周期减量</b><ul class="tips">${PLAN.strengthRule.map(x=>`<li>${esc(x)}</li>`).join('')}</ul>
+    <div class="row" style="margin-top:14px"><div class="sp tiny">先做 1 组 ×8 次半程热身</div>
+      <button class="btn sm primary" data-act="closesheet">关闭</button></div>`);
+}
+function showTest(k){
+  const t = PLAN.tests[k];
+  openSheet(`<h3>${esc(t.name)}</h3><div class="tiny">${esc(t.node)}</div>
+    <div class="card tight" style="margin-top:12px"><b>结构</b><div style="margin-top:4px">${esc(t.structure)}</div></div>
+    <div class="card tight"><b>分段配速</b><div style="margin-top:4px">${esc(t.splits)}</div></div>
+    <div class="card tight"><b>达标线</b><div style="margin-top:4px;color:var(--ok)">${esc(t.target)}</div></div>
+    <ul class="tips">${t.extra.map(x=>`<li>${esc(x)}</li>`).join('')}</ul>
+    <div class="row" style="margin-top:14px"><div class="sp"></div>
+      <button class="btn sm primary" data-act="closesheet">关闭</button></div>`);
+}
+
+/* ---------- 交互 ---------- */
+document.addEventListener('click', async (e)=>{
+  const btn = e.target.closest('[data-act]');
+  const tabBtn = e.target.closest('#tabbar button');
+  if(tabBtn){ S.tab = tabBtn.dataset.tab; save(); render(); if(S.tab==='today') maybeWeather(); return; }
+  if(!btn) {
+    if(e.target.id==='mask') closeSheet();
+    return;
+  }
+  const act = btn.dataset.act;
+  const t = curDate();
+
+  if(act==='tab'){ S.tab = btn.dataset.tab; save(); render(); return; }
+  if(act==='exitPreview'){ location.search = ''; return; }
+  if(act==='day'){ showDay(btn.dataset.date); return; }
+  if(act==='str'){ showStrength(btn.dataset.m); return; }
+  if(act==='test'){ showTest(btn.dataset.t); return; }
+  if(act==='closesheet'){ closeSheet(); return; }
+
+  if(act==='gate'){
+    const hrv = parseFloat(document.getElementById('inHrv').value);
+    const rhr = parseFloat(document.getElementById('inRhr').value);
+    S.daily[t] = Object.assign({}, S.daily[t], {hrv:isNaN(hrv)?null:hrv, rhr:isNaN(rhr)?null:rhr});
+    save(); render(); return;
+  }
+  if(act==='pain'){
+    S.daily[t] = Object.assign({}, S.daily[t], {pain: !(S.daily[t]&&S.daily[t].pain)});
+    save(); render(); return;
+  }
+  if(act==='wx'){
+    btn.disabled = true; btn.textContent = '取天气…';
+    await loadWeather(true);
+    render(); return;
+  }
+  if(act==='ck'){
+    const d = dayByDate(t) || dayByDate(DAYS[0].date);
+    const status = btn.dataset.s;
+    S.checks[d.date] = Object.assign({note:'',feel:null}, S.checks[d.date]||{}, {status});
+    save(); render(); return;
+  }
+  if(act==='feel'){
+    const d = dayByDate(t);
+    S.checks[d.date] = Object.assign({note:'',status:'done'}, S.checks[d.date]||{}, {feel:parseInt(btn.dataset.f,10)});
+    save(); render(); return;
+  }
+  if(act==='saveNote'){
+    const d = dayByDate(t);
+    const note = document.getElementById('inNote').value.trim();
+    S.checks[d.date] = Object.assign({status:'done',feel:null}, S.checks[d.date]||{}, {note});
+    save(); render(); return;
+  }
+  if(act==='toggleWx'){ S.weather = !S.weather; save(); render(); if(S.weather) maybeWeather(); return; }
+  if(act==='saveBase'){
+    const a = parseInt(document.getElementById('inHrvBase').value,10);
+    const b = parseInt(document.getElementById('inRhrBase').value,10);
+    if(!isNaN(a) && a>20) S.hrvBase = a;
+    if(!isNaN(b) && b>30) S.rhrBase = b;
+    S.city = S.city; save(); render(); return;
+  }
+  if(act==='findCity'){
+    const q = (document.getElementById('inCity').value||'').trim();
+    if(!q) return;
+    btn.disabled = true; btn.textContent = '查找…';
+    try{
+      const r = await fetch('https://geocoding-api.open-meteo.com/v1/search?count=1&language=zh&format=json&name='+encodeURIComponent(q));
+      const j = await r.json();
+      const it = (j.results||[])[0];
+      if(it){ S.city = {name:it.name, lat:it.latitude, lon:it.longitude}; cache = {weather:null,at:0,dayKey:null}; save(); render(); maybeWeather(); }
+      else { alert('没找到「'+q+'」，换个写法试试（如 杭州 / Hangzhou）'); btn.disabled=false; btn.textContent='查找'; }
+    }catch(err){ alert('查找失败，检查网络'); btn.disabled=false; btn.textContent='查找'; }
+    return;
+  }
+  if(act==='export'){
+    const blob = new Blob([JSON.stringify({plan:PLAN.meta.id, exported:new Date().toISOString(), state:S}, null, 2)], {type:'application/json'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = '跑步打卡备份-'+t+'.json';
+    a.click();
+    setTimeout(()=>URL.revokeObjectURL(a.href), 4000);
+    return;
+  }
+  if(act==='import'){
+    const inp = document.createElement('input');
+    inp.type = 'file'; inp.accept = 'application/json';
+    inp.onchange = () => {
+      const f = inp.files[0]; if(!f) return;
+      const rd = new FileReader();
+      rd.onload = () => {
+        try{
+          const j = JSON.parse(rd.result);
+          if(j && j.state){ S = Object.assign({}, DEF, j.state); save(); render(); alert('已导入 '+Object.keys(S.checks||{}).length+' 条打卡'); }
+          else alert('文件里没有 state 字段');
+        }catch(err){ alert('文件解析失败'); }
+      };
+      rd.readAsText(f);
+    };
+    inp.click();
+    return;
+  }
+  if(act==='reset'){
+    if(confirm('清空所有打卡与 HRV 记录？导出的备份不受影响。')){
+      S.checks = {}; S.daily = {}; save(); render();
+    }
+    return;
+  }
+});
+
+async function maybeWeather(){
+  if(!S.weather || !S.city || S.city.lat==null) return;
+  const w = await loadWeather(false);
+  if(w && w.ok) { if(S.tab==='today') render(); }
+}
+
+const __tab = Q.get('tab');
+if(['today','plan','log','set'].includes(__tab)) S.tab = __tab;
+render();
+maybeWeather();
+</script>
+</body>
+</html>
