@@ -125,6 +125,8 @@ ul.tips li{margin:3px 0}
 .hr{border:0;border-top:1px solid var(--line);margin:13px 0}
 .prog{height:7px;border-radius:9px;background:var(--card2);overflow:hidden;margin:8px 0 4px}
 .prog i{display:block;height:100%;background:linear-gradient(90deg,var(--E),var(--M));border-radius:9px}
+.zbar{display:flex;height:11px;border-radius:99px;overflow:hidden;background:var(--card2);border:1px solid var(--line)}
+.zbar i{display:block;height:100%}
 .wx{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-top:10px}
 .advice{margin-top:11px;padding:11px 12px;border-radius:12px;font-size:13.5px;
   background:rgba(96,165,250,.09);border:1px solid rgba(96,165,250,.22);color:#cfe3ff}
@@ -154,6 +156,7 @@ footer.foot{text-align:center;padding:6px 0 18px;font-size:11.5px;color:var(--tx
 <nav class="tabbar" id="tabbar">
   <button data-tab="today" class="on"><span class="ic">◎</span>今天</button>
   <button data-tab="plan"><span class="ic">▤</span>12 周</button>
+  <button data-tab="data"><span class="ic">▦</span>数据</button>
   <button data-tab="log"><span class="ic">✓</span>记录</button>
   <button data-tab="set"><span class="ic">⚙</span>设置</button>
 </nav>
@@ -164,7 +167,7 @@ const DAYS = PLAN.weeks.flatMap(w => w.days);
 const ZC = {E:'#34d399',M:'#60a5fa',T:'#fbbf24',GP:'#f87171',I:'#a78bfa',ST:'#22d3ee'};
 const ZNAME = {E:'E 区',M:'M 区',T:'T 区',GP:'GP',I:'I 区',ST:'ST'};
 const LS = 'runkit.v1';
-const DEF = {tab:'today', city:null, weather:true, hrvBase:97, rhrBase:55, checks:{}, daily:{}, seen:{} };
+const DEF = {tab:'today', city:null, weather:true, hrvBase:97, rhrBase:55, checks:{}, daily:{}, seen:{}, runs:[] };
 
 let S = load();
 let cache = { weather:null, at:0, dayKey:null };
@@ -263,6 +266,7 @@ function render(){
   [...document.querySelectorAll('#tabbar button')].forEach(b => b.classList.toggle('on', b.dataset.tab===tab));
   if(tab==='today') app.innerHTML = viewToday();
   else if(tab==='plan') app.innerHTML = viewPlan();
+  else if(tab==='data') app.innerHTML = viewData();
   else if(tab==='log') app.innerHTML = viewLog();
   else app.innerHTML = viewSet();
   window.scrollTo({top:0});
@@ -554,6 +558,240 @@ function viewSet(){
     ${footNote()}`;
 }
 
+
+/* ---------------- 数据：导入跑步记录 ---------------- */
+const ZHR = {E:[135,150], M:[152,164], T:[166,176], GP:[174,182], I:[178,190]};
+const ZORDER = ['E','M','T','GP','I'];
+const ZEDGE = [['warm',0,134],['E',135,150],['M',151,164],['T',165,176],['GP',177,182],['I',183,190],['over',191,999]];
+const ZLABEL = {warm:'热身/恢复',E:'轻松跑 E',M:'有氧稳态 M',T:'阈值跑 T',GP:'比赛配速 GP',I:'间歇跑 I',over:'超上限'};
+const STAGE_PACE = {1:{E:395,M:372},2:{E:380,M:362,T:330,I:300},3:{E:370,M:347,T:325,GP:314,I:291}};
+
+function zoneOf(hr, pace, planned, stage){
+  if(hr==null || isNaN(hr)) return 'unknown';
+  if(hr<135) return 'warm';
+  if(hr>190) return 'over';
+  const cands = ZORDER.filter(z => hr>=ZHR[z][0] && hr<=ZHR[z][1]);
+  if(cands.length<=1) return cands[0] || bandOf(hr);
+  if(cands.includes(planned)) return planned;
+  if(pace && stage){
+    const p = STAGE_PACE[stage] || {};
+    let best=null, bd=null;
+    cands.forEach(z=>{ if(p[z]){ const d=Math.abs(pace-p[z]); if(bd==null||d<bd){best=z;bd=d;} } });
+    if(best) return best;
+  }
+  return cands[cands.length-1];
+}
+function bandOf(hr){
+  for(const b of ZEDGE){ if(hr>=b[1] && hr<=b[2]) return b[0]; }
+  return 'over';
+}
+function stageOfWeek(w){ return w<=4?1:(w<=8?2:3); }
+function fixCad(c){ return !c ? null : (c<120 ? c*2 : c); }
+
+function textOf(el, names){
+  for(const n of names){
+    const list = el.getElementsByTagName('*');
+    for(let i=0;i<list.length;i++){ if(list[i].localName===n && list[i].textContent.trim()) return list[i].textContent.trim(); }
+  }
+  return null;
+}
+
+async function parseRunFile(file){
+  const raw = await file.text();
+  const doc = new DOMParser().parseFromString(raw, 'text/xml');
+  if(doc.getElementsByTagName('parsererror').length) {
+    throw new Error(/\.fit$/i.test(file.name) ? '不支持 FIT，请改导 TCX/GPX' : '文件不是有效的 XML');
+  }
+  const all = doc.getElementsByTagName('*');
+  const pts = [];
+  for(let i=0;i<all.length;i++){
+    const ln = all[i].localName;
+    if(ln==='Trackpoint' || ln==='trkpt') pts.push(all[i]);
+  }
+  if(!pts.length) throw new Error('文件里没有轨迹点（可能是室内跑或只导出了圈数据）');
+
+  const samples = [];
+  for(const p of pts){
+    const tnode = p.getElementsByTagName('*');
+    let time=null, hr=null, dist=null, cad=null;
+    for(let i=0;i<tnode.length;i++){
+      const e = tnode[i], ln = e.localName, v = e.textContent.trim();
+      if(ln==='Time' && !time) time = Date.parse(v)/1000;
+      else if((ln==='hr'||ln==='heartrate'||ln==='Value') && !hr && /^\d+$/.test(v)) hr = parseFloat(v);
+      else if(ln==='DistanceMeters' && !dist && v) dist = parseFloat(v);
+      else if((ln==='Cadence'||ln==='RunCadence'||ln==='cad') && !cad && v) cad = parseFloat(v);
+    }
+    if(time && !isNaN(time)) samples.push({t:time, hr:hr, dist:dist, cad:fixCad(cad)});
+  }
+  samples.sort((a,b)=>a.t-b.t);
+  if(samples.length<2) throw new Error('轨迹点太少，无法统计');
+
+  const t0=samples[0].t, t1=samples[samples.length-1].t;
+  const dists = samples.map(s=>s.dist).filter(v=>v!=null);
+  const distM = dists.length>1 && dists[dists.length-1]>dists[0] ? dists[dists.length-1]-dists[0] : 0;
+  const hrs = samples.map(s=>s.hr).filter(v=>v!=null);
+  const cads = samples.map(s=>s.cad).filter(v=>v!=null);
+  const start = new Date(t0*1000);
+  const pad2 = n => (n<10?'0':'')+n;
+  const date = start.getFullYear()+'-'+pad2(start.getMonth()+1)+'-'+pad2(start.getDate());
+  const hhmm = pad2(start.getHours())+':'+pad2(start.getMinutes());
+
+  const day = dayByDate(date);
+  const wk = day ? day.week : null;
+  const planned = day ? day.zone : null;
+  const stage = wk ? stageOfWeek(wk) : 3;
+
+  const zs = {};
+  for(let i=0;i<samples.length-1;i++){
+    const a=samples[i], b=samples[i+1], dtt=b.t-a.t;
+    if(dtt<=0 || dtt>60) continue;
+    let pace=null;
+    if(a.dist!=null && b.dist!=null && b.dist-a.dist>0.3) pace = dtt/((b.dist-a.dist)/1000);
+    const z = zoneOf(a.hr, pace, planned, stage);
+    zs[z] = (zs[z]||0) + dtt;
+  }
+  return {
+    id: (file.name+'|'+date+'|'+Math.round(distM)),
+    date: date, time: hhmm,
+    week: wk, planned: planned,
+    title: day ? day.title : '未排课',
+    dist: Math.round(distM/10)/100,
+    dur: Math.round(t1-t0),
+    pace: distM>50 ? Math.round((t1-t0)/(distM/1000)) : null,
+    avgHr: hrs.length ? Math.round(hrs.reduce((x,y)=>x+y,0)/hrs.length) : null,
+    maxHr: hrs.length ? Math.round(Math.max.apply(null,hrs)) : null,
+    cad: cads.length ? Math.round(cads.reduce((x,y)=>x+y,0)/cads.length) : null,
+    zs: zs
+  };
+}
+
+function zTotals(runs){
+  const tot = {};
+  runs.forEach(r => Object.keys(r.zs||{}).forEach(z => { tot[z] = (tot[z]||0) + r.zs[z]; }));
+  return tot;
+}
+function mins(s){ return Math.round((s||0)/60); }
+function zoneBar(tot){
+  const sum = Object.values(tot).reduce((a,b)=>a+b,0) || 1;
+  const cols = {warm:'#475569',E:'#34d399',M:'#60a5fa',T:'#fbbf24',GP:'#f87171',I:'#a78bfa',over:'#ef4444'};
+  const segs = ['warm','E','M','T','GP','I','over'].filter(z=>tot[z]).map(z=>{
+    const w=(tot[z]/sum*100);
+    return '<i style="width:'+w.toFixed(1)+'%;background:'+cols[z]+'"></i>';
+  }).join('');
+  const legend = ['warm','E','M','T','GP','I','over'].filter(z=>tot[z]).map(z=>
+    '<span class="tiny" style="margin-right:8px"><b style="color:'+cols[z]+'">■</b> '+ZLABEL[z]+' '+Math.round(tot[z]/sum*100)+'%</span>').join('');
+  return '<div class="zbar">'+segs+'</div><div style="margin-top:6px;line-height:1.9">'+legend+'</div>';
+}
+
+function boundsOf(mode, dateStr){
+  const d = parseISO(dateStr);
+  if(mode==='month'){
+    const y=d.getFullYear(), m=d.getMonth();
+    return [iso(new Date(y,m,1)), iso(new Date(y,m+1,0))];
+  }
+  const mon = new Date(d); mon.setDate(d.getDate() - ((d.getDay()+6)%7));
+  const sun = new Date(mon); sun.setDate(mon.getDate()+6);
+  return [iso(mon), iso(sun)];
+}
+function periodRuns(mode){
+  const runs = (S.runs||[]).slice();
+  let [from,to] = boundsOf(mode, curDate());
+  let list = runs.filter(r=>r.date>=from && r.date<=to);
+  if(!list.length && runs.length){
+    const latest = runs.slice().sort((a,b)=>a.date<b.date?1:-1)[0].date;
+    [from,to] = boundsOf(mode, latest);
+    list = runs.filter(r=>r.date>=from && r.date<=to);
+  }
+  return list.sort((a,b)=> a.date<b.date?1:-1), {list:list, from:from, to:to};
+}
+
+function viewData(){
+  const runs = (S.runs||[]).slice().sort((a,b)=>a.date<b.date?1:-1);
+  const mode = S.dataMode || 'week';
+  const pr = periodRuns(mode);
+  const list = pr.list;
+  const tot = zTotals(list);
+  const km = list.reduce((a,b)=>a+b.dist,0);
+  const dur = list.reduce((a,b)=>a+b.dur,0);
+
+  const head = `<div class="top"><div><div class="d1">跑步数据</div>
+    <div class="d2">共 ${runs.length} 次 · 累计 ${runs.reduce((a,b)=>a+b.dist,0).toFixed(1)} km</div></div></div>`;
+
+  const importer = `<div class="card">
+    <div class="row"><div class="sp"><b>导入跑步记录</b>
+      <div class="tiny" style="margin-top:3px">Zepp：运动记录 → 某次跑步 → 分享 → 导出 → TCX</div></div>
+      <button class="btn sm primary" data-act="importRuns">选择文件</button></div>
+    <div class="tiny" style="margin-top:8px">支持 .tcx / .gpx，可一次多选；按日期+距离自动去重</div>
+    <input type="file" id="fileRuns" accept=".tcx,.gpx,.xml" multiple class="hide">
+  </div>`;
+
+  if(!runs.length){
+    return head + importer + `<div class="card muted">还没有导入数据。跑完把 TCX 导出来丢进来，这里会按心率区间自动统计轻松跑/有氧/阈值/间歇各占多少。</div>`;
+  }
+
+  const seg = `<div class="seg" style="margin-bottom:12px">
+      <button data-act="dataMode" data-m="week" class="${mode==='week'?'on':''}">本周</button>
+      <button data-act="dataMode" data-m="month" class="${mode==='month'?'on':''}">本月</button>
+    </div>`;
+
+  const summary = `<div class="card">
+    <div class="tiny" style="margin-bottom:8px">${mode==='month'?'本月':'本周'} · ${esc(pr.from)} ~ ${esc(pr.to)}</div>
+    <div class="grid4">
+      ${statBox('次数', list.length)}
+      ${statBox('里程', km.toFixed(1)+' km')}
+      ${statBox('时长', mins(dur)+' 分')}
+      ${statBox('均步频', list.length? Math.round(list.filter(r=>r.cad).reduce((a,b)=>a+b.cad,0)/Math.max(1,list.filter(r=>r.cad).length)) : '—')}
+    </div>
+    <div style="margin-top:12px">${zoneBar(tot)}</div>
+  </div>`;
+
+  const rows = list.map(r=>{
+    const z = Object.keys(r.zs||{}).sort((a,b)=>r.zs[b]-r.zs[a])[0];
+    const pct = z ? Math.round(r.zs[z]/(Object.values(r.zs).reduce((a,b)=>a+b,0)||1)*100) : 0;
+    return `<div class="card tight" data-act="runDetail" data-id="${r.id}">
+      <div class="row"><div class="dot" style="background:${ZC[r.planned]||'#64748b'}"></div>
+        <div class="sp"><div class="nm">${esc(r.title)}</div>
+        <div class="ds">${r.date} ${r.time} · ${r.dist.toFixed(2)} km · ${Math.round(r.dur/60)} 分 · ${r.pace?mmssJS(r.pace)+'/km':'—'}</div></div>
+        <div style="text-align:right"><b style="font-size:13px">${r.avgHr||'—'}</b><div class="tiny">均心率</div></div>
+      </div>
+      <div class="tiny" style="margin-top:6px">主区间 ${z?ZLABEL[z]:'—'} ${pct}% · 步频 ${r.cad||'—'} · 最大心率 ${r.maxHr||'—'}</div>
+    </div>`;
+  }).join('');
+
+  return head + importer + seg + summary + `<div style="margin:14px 2px 8px;font-weight:700">明细</div>` + rows +
+    `<div class="card tight"><div class="row"><div class="sp tiny">导出给 AI 复盘用（Markdown）</div>
+      <button class="btn sm" data-act="exportRuns">导出</button>
+      <button class="btn sm ghost" data-act="clearRuns">清空</button></div></div>` + footNote();
+}
+
+function mmssJS(s){ s=Math.round(s); return Math.floor(s/60)+':'+(s%60<10?'0':'')+(s%60); }
+
+function exportRunsMd(){
+  const runs = (S.runs||[]).slice().sort((a,b)=>a.date<b.date?1:-1);
+  const byWeek = {};
+  runs.forEach(r=>{ const k=r.week?('W'+r.week):'其他'; (byWeek[k]=byWeek[k]||[]).push(r); });
+  const L = ['# 跑步数据导出（'+new Date().toISOString().slice(0,10)+'）',''];
+  Object.keys(byWeek).sort().forEach(k=>{
+    const rs = byWeek[k]; const tot = zTotals(rs);
+    const sum = Object.values(tot).reduce((a,b)=>a+b,0)||1;
+    L.push('## '+k+' · '+rs.length+' 次 · '+rs.reduce((a,b)=>a+b.dist,0).toFixed(2)+' km');
+    L.push('');
+    L.push('区间占比：' + ['warm','E','M','T','GP','I','over'].filter(z=>tot[z])
+      .map(z=>ZLABEL[z]+' '+Math.round(tot[z]/sum*100)+'%').join(' ｜ '));
+    L.push('');
+    L.push('| 日期 | 时间 | 计划课 | 距离km | 时长 | 配速 | 均心率 | 最大 | 步频 |');
+    L.push('|---|---|---|---|---|---|---|---|---|');
+    rs.slice().sort((a,b)=>a.date<b.date?-1:1).forEach(r=>{
+      L.push('| '+[r.date,r.time,r.title,r.dist.toFixed(2),mmssJS(r.dur),r.pace?mmssJS(r.pace):'—',r.avgHr||'—',r.maxHr||'—',r.cad||'—'].join(' | ')+' |');
+    });
+    L.push('');
+  });
+  L.push('## 口径说明');
+  L.push('- 区间按心率逐秒判定，按时间占比统计；区间重叠时优先采用当天计划课型');
+  L.push('- E 135–150 / M 152–164 / T 166–176 / GP 174–182 / I 178–190，<135 记热身，>190 记超上限');
+  return L.join('\n');
+}
+
 /* ---------- 弹层 ---------- */
 function openSheet(html){
   document.getElementById('sheetBody').innerHTML = html;
@@ -632,6 +870,23 @@ document.addEventListener('click', async (e)=>{
   if(act==='str'){ showStrength(btn.dataset.m); return; }
   if(act==='test'){ showTest(btn.dataset.t); return; }
   if(act==='closesheet'){ closeSheet(); return; }
+  if(act==='dataMode'){ S.dataMode = btn.dataset.m; save(); render(); return; }
+  if(act==='importRuns'){ document.getElementById('fileRuns').click(); return; }
+  if(act==='exportRuns'){
+    const blob = new Blob([exportRunsMd()], {type:'text/markdown'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = '跑步数据-'+curDate()+'.md';
+    a.click();
+    setTimeout(()=>URL.revokeObjectURL(a.href), 4000);
+    return;
+  }
+  if(act==='clearRuns'){
+    if(confirm('清空手机里已导入的跑步数据？电脑端文件夹里的报告不受影响。')){ S.runs = []; save(); render(); }
+    return;
+  }
+  if(act==='runDetail'){ showRun(btn.dataset.id); return; }
+
 
   if(act==='gate'){
     const hrv = parseFloat(document.getElementById('inHrv').value);
@@ -729,6 +984,42 @@ async function maybeWeather(){
 
 const __tab = Q.get('tab');
 if(['today','plan','log','set'].includes(__tab)) S.tab = __tab;
+
+document.addEventListener('change', async (e)=>{
+  if(e.target && e.target.id==='fileRuns'){
+    const files = [...e.target.files];
+    if(!files.length) return;
+    let ok = 0; const errs = [];
+    for(const f of files){
+      try{
+        const run = await parseRunFile(f);
+        const dup = S.runs.some(x => x.date===run.date && Math.abs(x.dist-run.dist)<0.05);
+        if(dup){ errs.push(f.name+'：重复'); continue; }
+        S.runs.push(run); ok++;
+      }catch(err){ errs.push(f.name+'：'+err.message); }
+    }
+    S.runs.sort((a,b)=> a.date<b.date?-1:1);
+    save(); render();
+    alert('导入成功 '+ok+' 条'+(errs.length?('\n\n未导入：\n'+errs.join('\n')):''));
+    e.target.value = '';
+  }
+});
+
+function showRun(id){
+  const r = (S.runs||[]).find(x=>x.id===id);
+  if(!r) return;
+  const tot = Object.values(r.zs||{}).reduce((a,b)=>a+b,0)||1;
+  const lines = ['warm','E','M','T','GP','I','over'].filter(z=>r.zs&&r.zs[z]).map(z=>
+    '<li>'+ZLABEL[z]+'：'+Math.round(r.zs[z]/60)+' 分（'+Math.round(r.zs[z]/tot*100)+'%）</li>').join('');
+  openSheet('<h3>'+esc(r.title)+'</h3><div class="tiny">'+r.date+' '+r.time+' ｜ '+(r.week?('W'+r.week):'计划外')+'</div>'+
+    '<div class="hero" style="--zc:'+(ZC[r.planned]||'#64748b')+';margin-top:12px">'+
+    '<div class="stats">'+statBox('距离', r.dist.toFixed(2)+' km')+statBox('时长', Math.round(r.dur/60)+' 分')+
+    statBox('均心率', r.avgHr||'—')+statBox('配速', r.pace?mmssJS(r.pace)+' /km':'—')+'</div></div>'+
+    '<b>区间分布</b><ul class="tips">'+(lines||'<li>无心率数据</li>')+'</ul>'+
+    '<div class="row" style="margin-top:14px"><div class="sp tiny">步频 '+(r.cad||'—')+' · 最大心率 '+(r.maxHr||'—')+'</div>'+
+    '<button class="btn sm primary" data-act="closesheet">关闭</button></div>');
+}
+
 render();
 maybeWeather();
 </script>
