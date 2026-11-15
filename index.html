@@ -3,145 +3,158 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#0b0e14">
+<meta name="theme-color" content="#faf9f5">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="12周跑步">
 <title>12周跑步 · 今日课表</title>
 <style>
 :root{
-  --bg:#0b0e14; --card:#141922; --card2:#1a212c; --line:#232c3a;
-  --tx:#e8edf5; --tx2:#9aa7ba; --tx3:#64748b;
-  --E:#34d399; --M:#60a5fa; --T:#fbbf24; --GP:#f87171; --I:#a78bfa; --REST:#64748b;
-  --ok:#34d399; --warn:#fbbf24; --bad:#f87171; --acc:#60a5fa;
+  --bg:#faf9f5; --surface:#ffffff; --surface2:#f7f5f0; --surface3:#f1eee6;
+  --ink:#141413; --ink2:#5d5b54; --ink3:#8a877d;
+  --line:#e8e4d9; --line2:#f0eee6;
+  --accent:#c96442; --accent-soft:#f6e9e2; --accent-ink:#a84f31;
+  --ok:#2d7a5e; --ok-soft:#e3f1ea;
+  --warn:#b87320; --warn-soft:#fdf3e4;
+  --bad:#c43c3c; --bad-soft:#fbeaea;
+  --E:#5c7a5e; --M:#6b7f9e; --T:#b87320; --GP:#c96442; --I:#7d6487; --REST:#a8a49a;
+  --serif:"Times New Roman",Georgia,"Songti SC","Noto Serif CJK SC","SimSun","STSong",serif;
+  --sans:system-ui,-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-html,body{margin:0;padding:0;background:var(--bg);color:var(--tx);
-  font-family:system-ui,-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;
-  font-size:15px;line-height:1.55;-webkit-font-smoothing:antialiased}
-body{padding-bottom:calc(74px + env(safe-area-inset-bottom))}
-.app{max-width:560px;margin:0 auto;padding:14px 14px 8px}
-h1,h2,h3{margin:0;font-weight:700}
-.muted{color:var(--tx2)}
-.tiny{font-size:12.5px;color:var(--tx3)}
-.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:15px;margin-bottom:12px}
-.card.tight{padding:12px}
-.row{display:flex;gap:8px;align-items:center}
+html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);
+  font-family:var(--sans);font-size:15px;line-height:1.65;-webkit-font-smoothing:antialiased}
+body{padding-bottom:calc(78px + env(safe-area-inset-bottom))}
+.app{max-width:560px;margin:0 auto;padding:20px 18px 10px}
+h1,h2,h3{margin:0;font-weight:600;font-family:var(--serif);letter-spacing:-.01em}
+.muted{color:var(--ink2)}
+.tiny{font-size:12.5px;color:var(--ink3);line-height:1.55}
+.card{background:var(--surface);border:1px solid var(--line2);border-radius:16px;
+  padding:18px;margin-bottom:14px;box-shadow:0 1px 2px rgba(20,20,19,.03)}
+.card.tight{padding:14px 16px}
+.row{display:flex;gap:10px;align-items:center}
 .row input,.row textarea{flex:1 1 auto;min-width:0}
-.wrap{display:flex;flex-wrap:wrap;gap:6px}
+.wrap{display:flex;flex-wrap:wrap;gap:7px}
 .sp{flex:1}
-.chip{display:inline-flex;align-items:center;gap:5px;background:var(--card2);
-  border:1px solid var(--line);border-radius:99px;padding:5px 10px;font-size:12.5px;color:var(--tx2)}
-.chip b{color:var(--tx);font-weight:600}
-.btn{white-space:nowrap;flex:0 0 auto;appearance:none;border:1px solid var(--line);background:var(--card2);color:var(--tx);
-  border-radius:12px;padding:11px 14px;font-size:14.5px;font-weight:600;cursor:pointer}
-.btn:active{transform:scale(.985)}
-.btn.primary{background:var(--acc);border-color:var(--acc);color:#05121f}
-.btn.ghost{background:transparent}
-.btn.sm{padding:8px 11px;font-size:13px;border-radius:10px}
-.btn.on{border-color:var(--acc);color:var(--acc);background:rgba(96,165,250,.1)}
-.grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
-.kv{background:var(--card2);border-radius:12px;padding:9px 10px}
-.kv .k{font-size:11.5px;color:var(--tx3)}
-.kv .v{font-size:16px;font-weight:700;margin-top:1px}
+.chip{display:inline-flex;align-items:center;gap:5px;background:var(--surface2);
+  border:1px solid var(--line2);border-radius:99px;padding:5px 11px;font-size:12.5px;color:var(--ink2)}
+.chip b{color:var(--ink);font-weight:600}
+.btn{white-space:nowrap;flex:0 0 auto;appearance:none;border:1px solid var(--line);
+  background:var(--surface);color:var(--ink);border-radius:10px;padding:10px 15px;
+  font-size:14px;font-weight:500;font-family:var(--sans);cursor:pointer;transition:background .15s,border-color .15s}
+.btn:active{transform:translateY(.5px)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn.ghost{background:transparent;border-color:transparent;color:var(--ink2)}
+.btn.sm{padding:7px 12px;font-size:13px;border-radius:9px}
+.btn.on{border-color:var(--accent);color:var(--accent-ink);background:var(--accent-soft)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:9px}
+.kv{background:var(--surface2);border-radius:10px;padding:10px 11px}
+.kv .k{font-size:11px;color:var(--ink3);letter-spacing:.02em}
+.kv .v{font-size:16px;font-weight:600;margin-top:2px;font-variant-numeric:tabular-nums}
 input[type=number],input[type=text],input[type=search],textarea{
-  width:100%;background:var(--card2);border:1px solid var(--line);color:var(--tx);
-  border-radius:11px;padding:10px 12px;font-size:14.5px;font-family:inherit}
-textarea{resize:vertical;min-height:52px}
-input::placeholder,textarea::placeholder{color:var(--tx3)}
-label.f{display:block;font-size:12px;color:var(--tx3);margin:0 0 5px 2px}
+  width:100%;background:var(--surface);border:1px solid var(--line);color:var(--ink);
+  border-radius:10px;padding:10px 12px;font-size:14.5px;font-family:var(--sans)}
+input:focus,textarea:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+textarea{resize:vertical;min-height:56px}
+input::placeholder,textarea::placeholder{color:#b9b5a9}
+label.f{display:block;font-size:11.5px;color:var(--ink3);margin:0 0 6px 1px;letter-spacing:.02em}
 
 /* header */
-.top{display:flex;align-items:flex-end;justify-content:space-between;margin:4px 2px 14px}
-.top .d1{font-size:26px;font-weight:800;letter-spacing:-.4px}
-.top .d2{font-size:13px;color:var(--tx2);margin-top:2px}
+.top{display:flex;align-items:flex-end;justify-content:space-between;margin:2px 2px 18px}
+.top .d1{font-size:28px;font-weight:500;letter-spacing:-.02em;font-family:var(--serif)}
+.top .d2{font-size:13px;color:var(--ink3);margin-top:3px}
 
 /* hero */
-.hero{position:relative;overflow:hidden;background:linear-gradient(160deg,var(--card),#10151d);
-  border:1px solid var(--line);border-radius:22px;padding:17px;margin-bottom:12px}
-.hero:before{content:"";position:absolute;inset:0 auto 0 0;width:5px;background:var(--zc,var(--REST))}
-.hero .zt{font-size:12px;letter-spacing:.6px;color:var(--zc,var(--REST));font-weight:700;text-transform:uppercase}
-.hero .t{font-size:21px;font-weight:800;margin:5px 0 3px;letter-spacing:-.3px}
-.hero .m{color:var(--tx2);font-size:14px}
-.hero .stats{margin-top:13px;display:grid;grid-template-columns:repeat(2,1fr);gap:7px}
-.hero .stats .kv{background:rgba(255,255,255,.035)}
-.badge{display:inline-block;font-size:11.5px;font-weight:700;padding:3px 8px;border-radius:7px;
-  background:rgba(255,255,255,.06);color:var(--tx2)}
-.badge.warn{background:rgba(251,191,36,.14);color:var(--warn)}
-.badge.ok{background:rgba(52,211,153,.14);color:var(--ok)}
-.badge.bad{background:rgba(248,113,113,.15);color:var(--bad)}
+.hero{position:relative;overflow:hidden;background:var(--surface);
+  border:1px solid var(--line2);border-radius:18px;padding:20px 20px 18px;margin-bottom:14px;
+  box-shadow:0 2px 10px rgba(20,20,19,.035)}
+.hero:before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--zc,var(--REST))}
+.hero .zt{font-size:11.5px;letter-spacing:.08em;color:var(--zc,var(--REST));font-weight:600}
+.hero .t{font-size:23px;font-weight:500;margin:7px 0 4px;font-family:var(--serif);letter-spacing:-.02em}
+.hero .m{color:var(--ink2);font-size:14px;line-height:1.6}
+.hero .stats{margin-top:16px;display:grid;grid-template-columns:repeat(2,1fr);gap:9px}
+.hero .stats .kv{background:var(--surface2)}
+.badge{display:inline-block;font-size:11.5px;font-weight:500;padding:3px 9px;border-radius:6px;
+  background:var(--surface2);color:var(--ink2);letter-spacing:.01em}
+.badge.warn{background:var(--warn-soft);color:var(--warn)}
+.badge.ok{background:var(--ok-soft);color:var(--ok)}
+.badge.bad{background:var(--bad-soft);color:var(--bad)}
 
 /* list */
-.item{display:flex;gap:11px;align-items:center;padding:11px 0;border-top:1px solid var(--line)}
+.item{display:flex;gap:12px;align-items:center;padding:12px 0;border-top:1px solid var(--line2)}
 .item:first-child{border-top:0}
-.dot{width:8px;height:8px;border-radius:99px;flex:0 0 auto;background:var(--REST)}
-.item .nm{font-weight:600}
-.item .ds{font-size:12.5px;color:var(--tx3)}
+.dot{width:7px;height:7px;border-radius:99px;flex:0 0 auto;background:var(--REST)}
+.item .nm{font-weight:500}
+.item .ds{font-size:12.5px;color:var(--ink3)}
 
 /* timeline */
-.tl{position:relative;padding-left:24px}
-.tl:before{content:"";position:absolute;left:3px;top:10px;bottom:10px;width:2px;background:#2c3a4e;border-radius:2px}
-.tl .n{position:relative;display:flex;gap:8px;padding:6px 0}
-.tl .n:before{content:"";position:absolute;left:-25px;top:11px;width:10px;height:10px;border-radius:99px;
-  background:var(--card);border:2px solid var(--acc);box-sizing:border-box}
-.tl .tm{flex:0 0 46px;font-variant-numeric:tabular-nums;font-weight:700;font-size:13px;color:var(--acc)}
-.tl .tx{flex:1;min-width:0;font-size:14px}
+.tl{position:relative;padding-left:26px}
+.tl:before{content:"";position:absolute;left:3px;top:12px;bottom:12px;width:1.5px;background:var(--line);border-radius:2px}
+.tl .n{position:relative;display:flex;gap:10px;padding:7px 0}
+.tl .n:before{content:"";position:absolute;left:-26px;top:12px;width:9px;height:9px;border-radius:99px;
+  background:var(--surface);border:2px solid var(--accent);box-sizing:border-box}
+.tl .tm{flex:0 0 46px;font-variant-numeric:tabular-nums;font-weight:600;font-size:12.5px;color:var(--accent-ink)}
+.tl .tx{flex:1;min-width:0;font-size:14px;color:var(--ink)}
 
 /* tabs */
 .tabbar{position:fixed;left:0;right:0;bottom:0;z-index:40;display:flex;
-  background:rgba(11,14,20,.92);backdrop-filter:blur(14px);border-top:1px solid var(--line);
-  padding-bottom:env(safe-area-inset-bottom)}
-.tabbar button{flex:1;appearance:none;background:none;border:0;color:var(--tx3);
-  padding:11px 4px 10px;font-size:11.5px;font-weight:600;display:flex;flex-direction:column;align-items:center;gap:3px}
-.tabbar button .ic{font-size:17px;line-height:1}
-.tabbar button.on{color:var(--tx)}
+  background:rgba(250,249,245,.92);backdrop-filter:blur(16px);
+  border-top:1px solid var(--line2);padding-bottom:env(safe-area-inset-bottom)}
+.tabbar button{flex:1;appearance:none;background:none;border:0;color:var(--ink3);
+  padding:12px 4px 11px;font-size:11px;font-weight:500;font-family:var(--sans);
+  display:flex;flex-direction:column;align-items:center;gap:4px;letter-spacing:.02em}
+.tabbar button .ic{font-size:16px;line-height:1;opacity:.85}
+.tabbar button.on{color:var(--ink)}
+.tabbar button.on .ic{color:var(--accent);opacity:1}
 
 /* week */
-.wkhead{display:flex;align-items:center;gap:8px;margin-bottom:9px}
-.wkhead .n{font-weight:800;font-size:16px}
-.wksum{font-size:12.5px;color:var(--tx3)}
-.days{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-top:11px}
-.dbtn{background:var(--card2);border:1px solid var(--line);border-radius:12px;padding:9px 6px;
-  text-align:center;cursor:pointer;color:var(--tx)}
-.dbtn .w{font-size:11.5px;color:var(--tx3)}
-.dbtn .v{font-size:13.5px;font-weight:700;margin-top:2px}
-.dbtn .z{width:100%;height:3px;border-radius:9px;margin-top:6px;background:var(--REST)}
-.dbtn.off{opacity:.55}
+.wkhead{display:flex;align-items:center;gap:10px;margin-bottom:11px}
+.wkhead .n{font-weight:500;font-size:17px;font-family:var(--serif)}
+.wksum{font-size:12.5px;color:var(--ink3)}
+.days{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:12px}
+.dbtn{background:var(--surface2);border:1px solid transparent;border-radius:11px;padding:10px 6px;
+  text-align:center;cursor:pointer;color:var(--ink)}
+.dbtn .w{font-size:11px;color:var(--ink3)}
+.dbtn .v{font-size:14px;font-weight:600;margin-top:2px;font-variant-numeric:tabular-nums}
+.dbtn .z{width:100%;height:3px;border-radius:9px;margin-top:7px;background:var(--REST)}
+.dbtn.off{opacity:.5}
 .dbtn .done{font-size:10.5px;color:var(--ok)}
 
 /* sheet */
-.mask{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:60;display:none}
+.mask{position:fixed;inset:0;background:rgba(20,20,19,.32);z-index:60;display:none;backdrop-filter:blur(2px)}
 .mask.on{display:block}
 .sheet{position:fixed;left:0;right:0;bottom:0;z-index:61;max-height:88vh;overflow:auto;
-  background:var(--card);border-radius:22px 22px 0 0;border-top:1px solid var(--line);
-  padding:16px 16px calc(18px + env(safe-area-inset-bottom));transform:translateY(100%);
-  transition:transform .24s ease;max-width:560px;margin:0 auto}
+  background:var(--bg);border-radius:22px 22px 0 0;border-top:1px solid var(--line2);
+  padding:18px 18px calc(20px + env(safe-area-inset-bottom));transform:translateY(100%);
+  transition:transform .26s cubic-bezier(.4,0,.2,1);max-width:560px;margin:0 auto;
+  box-shadow:0 -8px 40px rgba(20,20,19,.12)}
 .sheet.on{transform:translateY(0)}
-.sheet h3{font-size:18px;margin-bottom:2px}
-.handle{width:38px;height:4px;border-radius:9px;background:var(--line);margin:0 auto 12px}
-ul.tips{margin:8px 0 0;padding-left:18px;color:var(--tx2);font-size:13.5px}
-ul.tips li{margin:3px 0}
-.hr{border:0;border-top:1px solid var(--line);margin:13px 0}
-.prog{height:7px;border-radius:9px;background:var(--card2);overflow:hidden;margin:8px 0 4px}
-.prog i{display:block;height:100%;background:linear-gradient(90deg,var(--E),var(--M));border-radius:9px}
-.zbar{display:flex;height:11px;border-radius:99px;overflow:hidden;background:var(--card2);border:1px solid var(--line)}
-.zbar i{display:block;height:100%}
-.wx{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-top:10px}
-.advice{margin-top:11px;padding:11px 12px;border-radius:12px;font-size:13.5px;
-  background:rgba(96,165,250,.09);border:1px solid rgba(96,165,250,.22);color:#cfe3ff}
-.advice.warn{background:rgba(251,191,36,.09);border-color:rgba(251,191,36,.25);color:#ffe6ad}
-.advice.bad{background:rgba(248,113,113,.1);border-color:rgba(248,113,113,.28);color:#ffd2d2}
-.advice.ok{background:rgba(52,211,153,.09);border-color:rgba(52,211,153,.24);color:#c6f6e4}
-.feel{display:flex;gap:6px;margin-top:8px}
-.feel button{flex:1;padding:8px 0;border-radius:10px;border:1px solid var(--line);background:var(--card2);
-  color:var(--tx2);font-size:13px;font-weight:600}
-.feel button.on{background:var(--acc);color:#05121f;border-color:var(--acc)}
+.sheet h3{font-size:19px;margin-bottom:3px;font-weight:500}
+.handle{width:36px;height:4px;border-radius:9px;background:var(--line);margin:0 auto 14px}
+ul.tips{margin:10px 0 0;padding-left:18px;color:var(--ink2);font-size:13.5px;line-height:1.7}
+ul.tips li{margin:4px 0}
+.hr{border:0;border-top:1px solid var(--line2);margin:16px 0}
+.prog{height:6px;border-radius:9px;background:var(--surface3);overflow:hidden;margin:9px 0 5px}
+.prog i{display:block;height:100%;background:var(--accent);border-radius:9px}
+.wx{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:12px}
+.advice{margin-top:12px;padding:12px 14px;border-radius:11px;font-size:13.5px;line-height:1.6;
+  background:var(--surface2);border:1px solid var(--line2);color:var(--ink2)}
+.advice.warn{background:var(--warn-soft);border-color:#f2e2c8;color:#7a4d16}
+.advice.bad{background:var(--bad-soft);border-color:#f0d4d4;color:#8e2f2f}
+.advice.ok{background:var(--ok-soft);border-color:#d3e8dd;color:#235f49}
+.feel{display:flex;gap:6px;margin-top:9px}
+.feel button{flex:1;padding:9px 0;border-radius:9px;border:1px solid var(--line);background:var(--surface);
+  color:var(--ink2);font-size:12.5px;font-weight:500;font-family:var(--sans)}
+.feel button.on{background:var(--accent);color:#fff;border-color:var(--accent)}
 .hide{display:none!important}
-.seg{display:flex;background:var(--card2);border:1px solid var(--line);border-radius:12px;padding:3px;gap:3px}
-.seg button{flex:1;border:0;background:none;color:var(--tx2);padding:8px 6px;border-radius:9px;font-size:13px;font-weight:600}
-.seg button.on{background:var(--card);color:var(--tx);box-shadow:0 1px 0 rgba(255,255,255,.04)}
-footer.foot{text-align:center;padding:6px 0 18px;font-size:11.5px;color:var(--tx3)}
+.seg{display:flex;background:var(--surface2);border:1px solid var(--line2);border-radius:11px;padding:3px;gap:3px}
+.seg button{flex:1;border:0;background:none;color:var(--ink2);padding:9px 6px;border-radius:8px;
+  font-size:13px;font-weight:500;font-family:var(--sans)}
+.seg button.on{background:var(--surface);color:var(--ink);box-shadow:0 1px 3px rgba(20,20,19,.08)}
+.zbar{display:flex;height:10px;border-radius:99px;overflow:hidden;background:var(--surface3);border:1px solid var(--line2)}
+.zbar i{display:block;height:100%}
+footer.foot{text-align:center;padding:10px 0 22px;font-size:11.5px;color:#b0aca0}
 </style>
 </head>
 <body>
@@ -164,7 +177,7 @@ footer.foot{text-align:center;padding:6px 0 18px;font-size:11.5px;color:var(--tx
 <script>
 const PLAN = {"meta":{"id":"ENDURANCE-PLAN-2026-V2.1","title":"12 周跑步恢复与进阶","start":"2026-11-16","end":"2027-02-07","weeks":12,"totalKm":250.5,"runDays":[1,3,5,6],"redLines":["出门前 20 分等渗盐水洗鼻","20:20 前必须结束全部训练","训后 30 分内补水 + 碳水蛋白","步频守住约 180 步/分"]},"zones":{"E":{"name":"轻松有氧跑","hr":"135–150","rpe":"RPE 3–4","feel":"全程能完整聊天不喘气","goal":"打牢有氧底子与长距离耐力"},"M":{"name":"稳态有氧跑","hr":"152–164","rpe":"RPE 5–6","feel":"呼吸加深但稳健，只能说短句","goal":"提高巡航经济性，教会身体节省糖原"},"T":{"name":"乳酸阈值跑","hr":"166–176","rpe":"RPE 7","feel":"双腿微酸但能顶住","goal":"提升边跑边清除乳酸的抗疲劳能力"},"GP":{"name":"10K 专项配速","hr":"174–182","rpe":"RPE 7.5–8","feel":"模拟 10 公里目标比赛节奏","goal":"锁定比赛步频与神经募集节奏"},"I":{"name":"有氧间歇跑","hr":"178–190","rpe":"RPE 8–9","feel":"很吃力但可控（约 5 公里比赛速度）","goal":"刺激最大摄氧量上限"},"ST":{"name":"80m 顺畅加速","hr":null,"rpe":"不控心率","feel":"轻快不憋气","goal":"唤醒脚踝弹性与 180 步频"}},"strengths":{"A":{"name":"力量模块 A","slot":"周四跑后 · 约 20 分钟","minutes":"20","focus":"单腿离心缓冲与跟腱弹性","items":[{"n":"保加利亚分腿蹲","tip":"后脚搭床沿/椅面慢下","sets":"W1–4: 2×10/侧（2 秒下）｜W5–8: 3×12/侧（3 秒下）｜W9–11: 3×12/侧（底部停顿 2 秒）","alt":"前膝酸痛：双腿靠墙浅蹲（屈膝 45°–60°）3×45 秒"},{"n":"微屈膝提踵","tip":"前脚掌踩台阶，微屈膝 20°","sets":"W1–4: 3×12（平地双起单落）｜W5–8: 3×15/侧｜W9–11: 4×15/侧（台阶慢下 3 秒、顶停 2 秒）","alt":"跟腱或足底敏感：禁止下放台阶，改平地微屈膝双脚提踵保持 3×45 秒"},{"n":"平板支撑（或死虫式）","tip":"核心收紧，腰背平直不塌腰","sets":"W1–4: 2×30 秒｜W5–8: 3×40 秒｜W9–11: 3×45 秒（稳定均匀呼吸）","alt":"腰部酸胀或肩腕不适：改仰卧死虫式（屈膝交替点地）3×12 次"},{"n":"原地小幅弹性踝跳（可选）","tip":"脚跟不着地快触地，避免重心起伏过大","sets":"W1–4: 严禁安排（保护恢复期肌腱与骨膜）｜W5–11 无关节痛时：2×20 秒（像无绳跳绳）","alt":"用低幅度踝跳替代深蹲跳；出现局部不适立即取消"}]},"B":{"name":"力量模块 B","slot":"周二跑后 · 15–20 分钟","minutes":"15–20","focus":"下肢基础力量与抗掉髋","items":[{"n":"徒手深蹲","tip":"双脚与肩同宽，屈髋下蹲，膝对齐脚尖","sets":"W1–4: 2×12 次｜W5–8: 3×15 次｜W9–11: 3×15 次（慢下 2 秒、起身发力）","alt":"前膝不适：缩短下蹲幅度，改半程浅蹲（屈膝约 45°）3×15 次"},{"n":"双腿臀桥","tip":"仰卧屈膝顶髋，缓解久坐臀肌无力","sets":"W1–4: 2×15 次（顶停 1 秒）｜W5–8: 3×15 次（顶停 2 秒）｜W9–11: 3×15 次（顶峰停顿 2 秒）","alt":"大腿后侧容易抽筋：脚跟向臀部挪近 5–8 cm 再抬髋"},{"n":"侧卧蚌式开合","tip":"强化臀中肌，防止跑步后程掉髋内扣","sets":"W1–4: 2×15/侧｜W5–8: 3×15/侧（顶停 2 秒）｜W9–11: 3×15/侧（或屈膝侧桥 30 秒/侧）","alt":"髋外侧压迫痛：改仰卧屈膝双膝外推对抗 3×30 秒"}]}},"strengthRule":["第 1–4 周严禁任何跳跃动作（含深蹲跳）","第 5–11 周无关节不适，仅可加低幅度原地弹性踝跳（可选）","第 4 周 A/B 组数减半","第 8 周暂停 A/B","第 11 周 A 减半","第 12 周全停"],"tests":{"w8":{"node":"W8 周日 · 2026-01-10","name":"5.0 公里阶段测验 ②","structure":"2k 热身 + 5.0 km 全力测验 + 2k 冷身（共 9.0 km）","splits":"1–2K 稳在 4:55–5:00；3–4K 4:50–4:55；5K 加速","target":"≤ 24 分 30 秒，且无痛解锁 W9–12 新配速","extra":["末 15 分平均心率减 3–5 作新阈值","未达标沿用 W5–8 配速","后 2K 触地延长 ≤5 ms"]},"w12":{"node":"W12 周日 · 2027-02-07","name":"10.0 公里成果检验 ③","structure":"1.5k 热身 + 10.0 km 检验跑 + 1k 冷身（共 12.5 km）","splits":"1–3K 5:16–5:20；4–7K 5:12–5:16（6K 补水）；8–10K 5:10–5:15","target":"目标完赛 51:40–53:00（衰减压缩至 12.8–20.8 秒/km）","extra":["第 13 周纯 E 区恢复（二 4.5E / 四 5.0E / 日 6.5E，共 16km）","步频 ≥180，触地 ≤238 ms"]},"w4":{"node":"W4 周四 · 2026-12-10","name":"步态复测 ①","structure":"1k 热身 + 3.0 km 定速测步态 + 1k 冷身（共 5.0 km）","splits":"定速段配速 5:40/km（预估 160–170 次/分）","target":"步频 178–182，触地 ≤242ms，垂直步幅比 ≤7.7%","extra":["验停跑 1 个月恢复期结束后的基础步态","跑后次日晨起胫骨内侧与跟腱无压痛"]}},"weeks":[{"n":1,"start":"2026-11-16","end":"2026-11-22","phase":"恢复期","label":"基准周","km":16.0,"change":"基准启动周","days":[{"date":"2026-11-16","dow":0,"dowName":"周一","week":1,"dateLabel":"11/16","type":"rest","zone":null,"title":"完全休息日","time":"20:00–20:20","km":0.0,"mn":12,"hr":null,"pace":null,"main":"零路跑 · 泡沫轴轻滚放松 + 腹式呼吸","detail":["泡沫轴轻滚 15 分钟（含 5 分钟腹式呼吸）"],"strength":null,"test":null,"red":["不路跑、不练力量"],"notes":["晨起空腹称重；禁滚大腿外侧"]},{"date":"2026-11-17","dow":1,"dowName":"周二","week":1,"dateLabel":"11/17","type":"easy","zone":"E","title":"轻松跑 + 力量 B","time":"19:10–20:15","km":4.5,"mn":30,"hr":"135–150","pace":"6:20–6:50","main":"4.5 km 轻松跑（约 30 分钟）+ 4×80 米顺畅跑","detail":["心率 135–150 次/分 ｜ 配速 6:20–6:50","19:10 开跑 → 19:55 练力量 B（15–20 分）","80 米约 23 秒/趟（走休 60 秒），步频 180"],"strength":"B","test":null,"red":[],"notes":[]},{"date":"2026-11-18","dow":2,"dowName":"周三","week":1,"dateLabel":"11/18","type":"rest","zone":null,"title":"完全休息日","time":null,"km":0.0,"mn":0,"hr":null,"pace":null,"main":"全天休息 · 零跑步、零下肢力量","detail":["零跑步、零下肢力量","晚餐 17:30–18:00 吃七分饱"],"strength":null,"test":null,"red":["零跑步、零下肢力量"],"notes":["周四训练前 48 小时完整恢复窗口","全天摄入约 2,100–2,300 千卡"]},{"date":"2026-11-19","dow":3,"dowName":"周四","week":1,"dateLabel":"11/19","type":"quality","zone":"E","title":"轻松跑 + 力量 A","time":"19:05–20:20","km":5.0,"mn":33,"hr":"135–150","pace":"6:20–6:50","main":"5.0 km 轻松跑（约 33 分钟）","detail":["心率 135–150 次/分 ｜ 配速 6:20–6:50","19:05 开跑（约 33 分）","→ 19:55 练力量 A（20 分）","出门前 20 分洗鼻；前 10 分钟压慢至 6:30–6:50"],"strength":"A","test":null,"red":[],"notes":[]},{"date":"2026-11-20","dow":4,"dowName":"周五","week":1,"dateLabel":"11/20","type":"rest","zone":null,"title":"完全休息日","time":null,"km":0.0,"mn":0,"hr":null,"pace":null,"main":"全天休息 · 零跑步、零下肢力量","detail":["零跑步、零下肢力量","晚餐 17:30–18:00 吃七分饱"],"strength":null,"test":null,"red":["零跑步、零下肢力量"],"notes":["晚餐正常吃主食，为周日储备糖原"]},{"date":"2026-11-21","dow":5,"dowName":"周六","week":1,"dateLabel":"11/21","type":"rest","zone":null,"title":"完全休息日（备赛周日长距离）","time":null,"km":0.0,"mn":0,"hr":null,"pace":null,"main":"0.0 km · 全天休息","detail":["严禁任何下肢力量训练","为周日长距离储备体力"],"strength":null,"test":null,"red":["严禁在周六安排任何下肢力量训练"],"notes":["严禁在周六安排任何下肢力量训练","第 1–5 周周六均安排全休"]},{"date":"2026-11-22","dow":6,"dowName":"周日","week":1,"dateLabel":"11/22","type":"long","zone":"E","title":"周末长距离 LSD","time":"19:00–20:15","km":6.5,"mn":43,"hr":"≤148","pace":"6:20–6:50","main":"6.5 km 周末长距离 LSD（约 43 分钟）","detail":["心率 ≤148 次/分 ｜ 配速 6:20–6:50","19:00 准时开跑 · 20:15 前结束","全程可完整聊天，步频约 180 步/分"],"strength":null,"test":null,"red":[],"notes":[]}]},{"n":2,"start":"2026-11-23","end":"2026-11-29","phase":"恢复期","label":"恢复期稳步加量","km":17.5,"change":"+9.4%","days":[{"date":"2026-11-23","dow":0,"dowName":"周一","week":2,"dateLabel":"11/23","type":"rest","zone":null,"title":"完全休息日","time":"20:00–20:20","km":0.0,"mn":12,"hr":null,"pace":null,"main":"零路跑 · 泡沫轴轻滚放松 + 腹式呼吸","detail":["泡沫轴轻滚 15 分钟（含 5 分钟腹式呼吸）"],"strength":null,"test":null,"red":["不路跑、不练力量"],"notes":["晨起空腹称重（防跌破 49.3 kg）"]},{"date":"2026-11-24","dow":1,"dowName":"周二","week":2,"dateLabel":"11/24","type":"easy","zone":"E","title":"轻松跑 + 力量 B","time":"19:10–20:15","km":5.0,"mn":33,"hr":"135–150","pace":"6:20–6:50","main":"5.0 km 轻松跑（约 33 分钟）+ 4×80 米顺畅跑","detail":["心率 135–150 次/分 ｜ 配速 6:20–6:50","19:10 开跑 → 19:55 练力量 B（15–20 分）","80 米约 23 秒/趟（走休 60 秒），步频 180"],"strength":"B","test":null,"red":[],"notes":[]},{"date":"2026-11-25","dow":2,"dowName":"周三","week":2,"dateLabel":"11/25","type":"rest","zone":null,"title":"完全休息日","time":null,"km":0.0,"mn":0,"hr":null,"pace":null,"main":"全天休息 · 零跑步、零下肢力量","detail":["零跑步、零下肢力量","晚餐 17:30–18:00 吃七分饱"],"strength":null,"test":null,"red":["零跑步、零下肢力量"],"notes":["周四训练前 48 小时完整恢复窗口","切勿因白天久坐自行加练深蹲"]},{"date":"2026-11-26","dow":3,"dowName":"周四","week":2,"dateLabel":"11/26","type":"quality","zone":"E","title":"轻松跑 + 力量 A","time":"19:05–20:20","km":5.5,"mn":36,"hr":"135–150","pace":"6:20–6:50","main":"5.5 km 轻松跑（约 36 分钟）","detail":["心率 135–150 次/分 ｜ 配速 6:20–6:50","19:05 开跑（约 36 分）","→ 19:55 练力量 A（20 分）","巩固有氧步频 180 步/分，不跨大步"],"strength":"A","test":null,"red":[],"notes":[]},{"date":"2026-11-27","dow":4,"dowName":"周五","week":2,"dateLabel":"11/27","type":"rest","zone":null,"title":"完全休息日","time":null,"km":0.0,"mn":0,"hr":null,"pace":null,"main":"全天休息 · 零跑步、零下肢力量","detail":["零跑步、零下肢力量","晚餐 17:30–18:00 吃七分饱"],"strength":null,"test":null,"red":["零跑步、零下肢力量"],"notes":["保证睡眠促进肌腱胶原蛋白修复"]},{"date":"2026-11-28","dow":5,"dowName":"周六","week":2,"dateLabel":"11/28","type":"rest","zone":null,"title":"完全休息日（备赛周日长距离）","time":null,"km":0.0,"mn":0,"hr":null,"pace":null,"main":"0.0 km · 全天休息","detail":["严禁任何下肢力量训练","为周日长距离储备体力"],"strength":null,"test":null,"red":["严禁在周六安排任何下肢力量训练"],"notes":["严禁在周六安排任何下肢力量训练","晚饭 17:30–18:00 吃七分饱"]},{"date":"2026-11-29","dow":6,"dowName":"周日","week":2,"dateLabel":"11/29","type":"long","zone":"E","title":"周末长距离 LSD","time":"19:00–20:15","km":7.0,"mn":46,"hr":"135–150","pace":"6:20–6:50","main":"7.0 km 周末长距离 LSD（约 46 分钟）","detail":["心率 135–150 次/分 ｜ 配速 6:20–6:50","19:00 准时开跑 · 较上周增加 0.5 km","全程可完整聊天，训后 30 分内补餐"],"strength":null,"test":null,"red":[],"notes":[]}]},{"n":3,"start":"2026-11-30","end":"2026-12-06","phase":"恢复期","label":"恢复期稳态初探","km":19.0,"change":"+8.6%","days":[{"date":"2026-11-30","dow":0,"dowName":"周一","week":3,"dateLabel":"11/30","type":"rest","zone":null,"title":"完全休息日","time":"20:00–20:20","km":0.0,"mn":12,"hr":null,"pace":null,"main":"零路跑 · 泡沫轴轻滚放松 + 腹式呼吸","detail":["泡沫轴轻滚 15 分钟（含 5 分钟腹式呼吸）"],"strength":null,"test":null,"red":["不路跑、不练力量"],"notes":["晨起空腹称重；滚压小腿与臀肌"]},{"date":"2026-12-01","dow":1,"dowName":"周二","week":3,"dateLabel":"12/1","type":"easy","zone":"E","title":"轻松跑 + 力量 B","time":"19:10–20:15","km":5.5,"mn":36,"hr":"135–150","pace":"6:20–6:50","main":"5.5 km 轻松跑（约 36 分钟）+ 5×80 米顺畅跑","detail":["心率 135–150 次/分 ｜ 配速 6:20–6:50","19:10 开跑 → 19:55 练力量 B（15–20 分）","80 米约 23 秒/趟（走休 60 秒），步频 180"],"strength":"B","test":null,"red":[],"notes":[]},{"date":"2026-12-02","dow":2,"dowName":"周三","week":3,"dateLabel":"12/2","type":"rest","zone":null,"title":"完全休息日","time":null,"km":0.0,"mn":0,"hr":null,"pace":null,"main":"全天休息 · 零跑步、零下肢力量","detail":["零跑步、零下肢力量","晚餐 17:30–18:00 吃七分饱"],"strength":null,"test":null,"red":["零跑步、零下肢力量"],"notes":["周四稳态跑前 48 小时完整恢复窗口","全天碳水 250–350g、蛋白 70–80g"]},{"date":"2026-12-03","dow":3,"dowName":"周四","week":3,"dateLabel":"12/3","type":"quality","zone":"M","title":"稳态初探 + 力量 A","time":"19:05–20:20","km":6.0,"mn":38,"hr":"152–164","pace":"6:05–6:20","main":"共 6.0 km：4.0 km E 区 + 2.0 km M 区 @ 6:05–6:20","detail":["心率 152–164 次/分 ｜ 配速 6:05–6:20","19:05 开跑（约 38 分）","→ 19:55 练力量 A（20 分）","前 4 km 保持 135–150 次/分（6:20–6:50）"],"strength":"A","test":null,"red":[],"notes":[]},{"date":"2026-12-04","dow":4,"dowName":"周五","week":3,"dateLabel":"12/4","type":"rest","zone":null,"title":"完全休息日","time":null,"km":0.0,"mn":0,"hr":null,"pace":null,"main":"全天休息 · 零跑步、零下肢力量","detail":["零跑步、零下肢力量","晚餐 17:30–18:00 吃七分饱"],"strength":null,"test":null,"red":["零跑步、零下肢力量"],"notes":["消退周四微损伤，早睡恢复"]},{"date":"2026-12-05","dow":5,"dowName":"周六","week":3,"dateLabel":"12/5","type":"rest","zone":null,"title":"完全休息日（备赛周日长距离）","time":null,"km":0.0,"mn":0,"hr":null,"pace":null,"main":"0.0 km · 全天休息","detail":["严禁任何下肢力量训练","为周日长距离储备体力"],"strength":null,"test":null,"red":["严禁在周六安排任何下肢力量训练"],"notes":["严禁在周六安排任何下肢力量训练","晚饭七分饱，少油少辣"]},{"date":"2026-12-06","dow":6,"dowName":"周日","week":3,"dateLabel":"12/6","type":"long","zone":"E","title":"周末长距离 LSD","time":"19:00–20:15","km":7.5,"mn":49,"hr":"135–150","pace":"6:20–6:50","main":"7.5 km 周末长距离 LSD（约 49 分钟）","detail":["心率 135–150 次/分 ｜ 配速 6:20–6:50","19:00 准时开跑 · 较上周增加 0.5 km","严格压住心率，切勿前半程抢快"],"strength":null,"test":null,"red":[],"notes":[]}]},{"n":4,"start":"2026-12-07","end":"2026-12-13","phase":"恢复期","label":"减量与步态复测①周","km":17.5,"change":"-7.9% 减量","days":[{"date":"2026-12-07","dow":0,"dowName":"周一","week":4,"dateLabel":"12/7","type":"rest","zone":null,"title":"完全休息日","time":"20:00–20:20","km":0.0,"mn":12,"hr":null,"pace":null,"main":"零路跑 · 泡沫轴轻滚放松 + 腹式呼吸","detail":["泡沫轴轻滚 15 分钟（含 5 分钟腹式呼吸）"],"strength":null,"test":null,"red":["不路跑、不练力量"],"notes":["晨起空腹称重；本周为减量恢复周"]},{"date":"2026-12-08","dow":1,"dowName":"周二","week":4,"dateLabel":"12/8","type":"easy","zone":"E","title":"轻松跑 + 力量 B（减半）","time":"19:10–20:15","km":5.0,"mn":33,"hr":"135–150","pace":"6:20–6:50","main":"5.0 km 轻松跑（约 33 分钟）+ 4×80 米顺畅跑","detail":["心率 135–150 次/分 ｜ 配速 6:20–6:50","19:10 开跑 → 19:55 练力量 B（15–20 分）","80 米约 23 秒/趟（走休 60 秒），步频 180","力量 B 组数减半"],"strength":"B","test":null,"red":[],"notes":[]},{"date":"2026-12-09","dow":2,"dowName":"周三","week":4,"dateLabel":"12/9","type":"rest","zone":null,"title":"完全休息日","time":null,"km":0.0,"mn":0,"hr":null,"pace":null,"main":"全天休息 · 零跑步、零下肢力量","detail":["零跑步、零下肢力量","晚餐 17:30–18:00 吃七分饱"],"strength":null,"test":null,"red":["零跑步、零下肢力量"],"notes":["确保跑步动态传感器/心率带电量充足","恢复窗口整整 48 小时"]},{"date":"2026-12-10","dow":3,"dowName":"周四","week":4,"dateLabel":"12/10","type":"quality","zone":"M","title":"步态复测 ① + 力量 A减半","time":"19:05–20:20","km":5.0,"mn":30,"hr":"160–172","pace":"5:40","main":"共 5.0 km：1.0 km E 区 + 3.0 km T 区（定速 5:40） + 1.0 km E 区","detail":["心率 160–172 次/分 ｜ 定速 5:40","19:05 开跑（约 30 分）","→ 19:55 练力量 A（20 分）","定速段 3.0 km 配 5:40/km（预估 160–170 次/分）","验收：步频 178–182、触地 ≤242ms、垂直步幅比 ≤7.7%"],"strength":"A","test":"w4","red":[],"notes":[]},{"date":"2026-12-11","dow":4,"dowName":"周五","week":4,"dateLabel":"12/11","type":"rest","zone":null,"title":"完全休息日","time":null,"km":0.0,"mn":0,"hr":null,"pace":null,"main":"全天休息 · 零跑步、零下肢力量","detail":["零跑步、零下肢力量","晚餐 17:30–18:00 吃七分饱"],"strength":null,"test":null,"red":["零跑步、零下肢力量"],"notes":["若晨起有局部按压痛需多休 48 小时"]},{"date":"2026-12-12","dow":5,"dowName":"周六","week":4,"dateLabel":"12/12","type":"rest","zone":null,"title":"完全休息日（备赛周日长距离）","time":null,"km":0.0,"mn":0,"hr":null,"pace":null,"main":"0.0 km · 全天休息","detail":["严禁任何下肢力量训练","为周日长距离储备体力"],"strength":null,"test":null,"red":["严禁在周六安排任何下肢力量训练"],"notes":["严禁在周六安排任何下肢力量训练","晚饭 17:30–18:00 吃七分饱"]},{"date":"2026-12-13","dow":6,"dowName":"周日","week":4,"dateLabel":"12/13","type":"long","zone":"E","title":"周末长距离 LSD","time":"19:00–20:15","km":7.5,"mn":49,"hr":"135–150","pace":"6:20–6:50","main":"7.5 km 周末长距离 LSD（约 49 分钟）","detail":["心率 135–150 次/分 ｜ 配速 6:20–6:50","19:00 准时开跑 · 与上周持平","完成第一阶段恢复期，下周配速小幅升级"],"strength":null,"test":null,"red":[],"notes":[]}]},{"n":5,"start":"2026-12-14","end":"2026-12-20","phase":"巩固期","label":"配速小幅升级","km":19.0,"change":"+8.6%","days":[{"date":"2026-12-14","dow":0,"dowName":"周一","week":5,"dateLabel":"12/14","type":"rest","zone":null,"title":"完全休息日","time":"20:00–20:20","km":0.0,"mn":12,"hr":null,"pace":null,"main":"零路跑 · 泡沫轴轻滚放松 + 腹式呼吸","detail":["泡沫轴轻滚 15 分钟（含 5 分钟腹式呼吸）"],"strength":null,"test":null,"red":["不路跑、不练力量"],"notes":["晨起空腹称重；本周起力量恢复正常组数"]},{"date":"2026-12-15","dow":1,"dowName":"周二","week":5,"dateLabel":"12/15","type":"easy","zone":"E","title":"轻松跑 + 力量 B","time":"19:10–20:15","km":5.0,"mn":32,"hr":"135–150","pace":"6:05–6:35","main":"5.0 km 轻松跑（约 32 分钟）+ 5×80 米顺畅跑","detail":["心率 135–150 次/分 ｜ 配速 6:05–6:35","19:10 开跑 → 19:55 练力量 B（15–20 分）","80 米约 22 秒/趟（走休 60 秒），步频 180"],"strength":"B","test":null,"red":[],"notes":[]},{"date":"2026-12-16","dow":2,"dowName":"周三","week":5,"dateLabel":"12/16","type":"rest","zone":null,"title":"完全休息日","time":null,"km":0.0,"mn":0,"hr":null,"pace":null,"main":"全天休息 · 零跑步、零下肢力量","detail":["零跑步、零下肢力量","晚餐 17:30–18:00 吃七分饱"],"strength":null,"test":null,"red":["零跑步、零下肢力量"],"notes":["周四稳态课前 48 小时完整恢复窗口","保证主食与蛋白质摄入"]},{"date":"2026-12-17","dow":3,"dowName":"周四","week":5,"dateLabel":"12/17","type":"quality","zone":"M","title":"稳态有氧跑 + 力量 A","time":"19:05–20:20","km":6.0,"mn":37,"hr":"152–164","pace":"5:55–6:10","main":"共 6.0 km：1.5 km E 区 + 3.5 km M 区 @ 5:55–6:10 + 1.0 km E 区","detail":["心率 152–164 次/分 ｜ 配速 5:55–6:10","19:05 开跑（约 37 分）","→ 19:55 练力量 A（20 分）","前 10 分钟热身压慢至 6:30–6:50；出门前洗鼻"],"strength":"A","test":null,"red":[],"notes":[]},{"date":"2026-12-18","dow":4,"dowName":"周五","week":5,"dateLabel":"12/18","type":"rest","zone":null,"title":"完全休息日","time":null,"km":0.0,"mn":0,"hr":null,"pace":null,"main":"全天休息 · 零跑步、零下肢力量","detail":["零跑步、零下肢力量","晚餐 17:30–18:00 吃七分饱"],"strength":null,"test":null,"red":["零跑步、零下肢力量"],"notes":["晚间避免熬夜，促进超量恢复"]},{"date":"2026-12-19","dow":5,"dowName":"周六","week":5,"dateLabel":"12/19","type":"rest","zone":null,"title":"完全休息日（备赛周日长距离）","time":null,"km":0.0,"mn":0,"hr":null,"pace":null,"main":"0.0 km · 全天休息","detail":["严禁任何下肢力量训练","为周日长距离储备体力"],"strength":null,"test":null,"red":["严禁在周六安排任何下肢力量训练"],"notes":["严禁在周六安排任何下肢力量训练","晚饭 17:30–18:00 吃七分饱"]},{"date":"2026-12-20","dow":6,"dowName":"周日","week":5,"dateLabel":"12/20","type":"long","zone":"E","title":"周末长距离 LSD","time":"19:00–20:15","km":8.0,"mn":50,"hr":"135–150","pace":"6:05–6:35","main":"8.0 km 周末长距离 LSD（约 50 分钟）","detail":["心率 135–150 次/分 ｜ 配速 6:05–6:35","19:00 准时开跑 · 较上周增加 0.5 km","全程可完整聊天，步频约 180 步/分"],"strength":null,"test":null,"red":[],"notes":[]}]},{"n":6,"start":"2026-12-21","end":"2026-12-27","phase":"巩固期","label":"引入乳酸阈值跑","km":21.0,"change":"+10.5%","days":[{"date":"2026-12-21","dow":0,"dowName":"周一","week":6,"dateLabel":"12/21","type":"rest","zone":null,"title":"完全休息日","time":"20:00–20:20","km":0.0,"mn":12,"hr":null,"pace":null,"main":"零路跑 · 泡沫轴轻滚放松 + 腹式呼吸","detail":["泡沫轴轻滚 15 分钟（含 5 分钟腹式呼吸）"],"strength":null,"test":null,"red":["不路跑、不练力量"],"notes":["晨起空腹称重；本周起周六加入短慢跑"]},{"date":"2026-12-22","dow":1,"dowName":"周二","week":6,"dateLabel":"12/22","type":"easy","zone":"E","title":"轻松跑 + 力量 B","time":"19:10–20:15","km":4.5,"mn":29,"hr":"135–150","pace":"6:05–6:35","main":"4.5 km 轻松跑（约 29 分钟）+ 5×80 米顺畅跑","detail":["心率 135–150 次/分 ｜ 配速 6:05–6:35","19:10 开跑 → 19:55 练力量 B（15–20 分）","80 米约 22 秒/趟（走休 60 秒），步频 180"],"strength":"B","test":null,"red":[],"notes":[]},{"date":"2026-12-23","dow":2,"dowName":"周三","week":6,"dateLabel":"12/23","type":"rest","zone":null,"title":"完全休息日","time":null,"km":0.0,"mn":0,"hr":null,"pace":null,"main":"全天休息 · 零跑步、零下肢力量","detail":["零跑步、零下肢力量","晚餐 17:30–18:00 吃七分饱"],"strength":null,"test":null,"red":["零跑步、零下肢力量"],"notes":["周四首次阈值跑前 48 小时恢复窗口","攒足糖原，保障周四高质量完成"]},{"date":"2026-12-24","dow":3,"dowName":"周四","week":6,"dateLabel":"12/24","type":"quality","zone":"T","title":"阈值短巡航 + 力量 A","time":"19:05–20:20","km":6.0,"mn":37,"hr":"166–176","pace":"5:25–5:35","main":"共 6.0 km：1.5 km E + 3 × 1.0 km T 区 @ 5:25–5:35［组间慢跑 0.25 km×2］ + 1.0 km E","detail":["心率 166–176 次/分 ｜ 配速 5:25–5:35","19:05 开跑（约 37 分）","→ 19:55 练力量 A（20 分）","每组间慢跑 0.25 km（共 0.5 km）→ 19:55 练力量 A","双腿微酸但能顶住；张口时舌尖抵上颚"],"strength":"A","test":null,"red":[],"notes":[]},{"date":"2026-12-25","dow":4,"dowName":"周五","week":6,"dateLabel":"12/25","type":"rest","zone":null,"title":"完全休息日","time":null,"km":0.0,"mn":0,"hr":null,"pace":null,"main":"全天休息 · 零跑步、零下肢力量","detail":["零跑步、零下肢力量","晚餐 17:30–18:00 吃七分饱"],"strength":null,"test":null,"red":["零跑步、零下肢力量"],"notes":["保证睡眠修复周四离心力量微损伤"]},{"date":"2026-12-26","dow":5,"dowName":"周六","week":6,"dateLabel":"12/26","type":"wake","zone":"E","title":"短程唤醒慢跑","time":"19:15–19:45","km":2.0,"mn":13,"hr":"135–150","pace":"6:05–6:35","main":"2.0 km 轻松唤醒慢跑（约 13 分钟）+ 拉伸","detail":["心率 135–150 次/分 ｜ 配速 6:05–6:35"],"strength":null,"test":null,"red":[],"notes":["19:15–19:45（严禁在周六练下肢力量）","极轻松激活神经，切勿跑快消耗体力"]},{"date":"2026-12-27","dow":6,"dowName":"周日","week":6,"dateLabel":"12/27","type":"long","zone":"E","title":"周末长距离 LSD","time":"19:00–20:15","km":8.5,"mn":53,"hr":"135–150","pace":"6:05–6:35","main":"8.5 km 周末长距离 LSD（约 53 分钟）","detail":["心率 135–150 次/分 ｜ 配速 6:05–6:35","19:00 准时开跑 · 较上周增加 0.5 km","训后 30 分内补 250ml 水 + 碳水蛋白"],"strength":null,"test":null,"red":[],"notes":[]}]},{"n":7,"start":"2026-12-28","end":"2027-01-03","phase":"巩固期","label":"阈值加长","km":23.0,"change":"+9.5%","days":[{"date":"2026-12-28","dow":0,"dowName":"周一","week":7,"dateLabel":"12/28","type":"rest","zone":null,"title":"完全休息日","time":"20:00–20:20","km":0.0,"mn":12,"hr":null,"pace":null,"main":"零路跑 · 泡沫轴轻滚放松 + 腹式呼吸","detail":["泡沫轴轻滚 15 分钟（含 5 分钟腹式呼吸）"],"strength":null,"test":null,"red":["不路跑、不练力量"],"notes":["晨起空腹称重（防跌破 49.3 kg）"]},{"date":"2026-12-29","dow":1,"dowName":"周二","week":7,"dateLabel":"12/29","type":"easy","zone":"E","title":"轻松跑 + 力量 B","time":"19:10–20:15","km":5.0,"mn":32,"hr":"135–150","pace":"6:05–6:35","main":"5.0 km 轻松跑（约 32 分钟）+ 6×80 米顺畅跑","detail":["心率 135–150 次/分 ｜ 配速 6:05–6:35","19:10 开跑 → 19:55 练力量 B（15–20 分）","80 米约 22 秒/趟（走休 60 秒），步频 180"],"strength":"B","test":null,"red":[],"notes":[]},{"date":"2026-12-30","dow":2,"dowName":"周三","week":7,"dateLabel":"12/30","type":"rest","zone":null,"title":"完全休息日","time":null,"km":0.0,"mn":0,"hr":null,"pace":null,"main":"全天休息 · 零跑步、零下肢力量","detail":["零跑步、零下肢力量","晚餐 17:30–18:00 吃七分饱"],"strength":null,"test":null,"red":["零跑步、零下肢力量"],"notes":["周四阈值课前 48 小时完整恢复窗口","全天碳水 250–350g、蛋白 70–80g"]},{"date":"2026-12-31","dow":3,"dowName":"周四","week":7,"dateLabel":"12/31","type":"quality","zone":"T","title":"阈值中巡航 + 力量 A","time":"19:05–20:20","km":6.5,"mn":40,"hr":"166–176","pace":"5:25–5:35","main":"共 6.5 km：1.5 km E + 3 × 1.2 km T 区 @ 5:25–5:35［组间慢跑 0.2 km×2］ + 1.0 km E","detail":["心率 166–176 次/分 ｜ 配速 5:25–5:35","19:05 开跑（约 40 分）","→ 19:55 练力量 A（20 分）","每组间慢跑 0.2 km（共 0.4 km）→ 19:55 练力量 A","节奏均匀不前快后慢；出门前 20 分洗鼻"],"strength":"A","test":null,"red":[],"notes":[]},{"date":"2027-01-01","dow":4,"dowName":"周五","week":7,"dateLabel":"1/1","type":"rest","zone":null,"title":"完全休息日","time":null,"km":0.0,"mn":0,"hr":null,"pace":null,"main":"全天休息 · 零跑步、零下肢力量","detail":["零跑步、零下肢力量","晚餐 17:30–18:00 吃七分饱"],"strength":null,"test":null,"red":["零跑步、零下肢力量"],"notes":["节日作息仍需守住入睡时间"]},{"date":"2027-01-02","dow":5,"dowName":"周六","week":7,"dateLabel":"1/2","type":"wake","zone":"E","title":"短程唤醒慢跑","time":"19:15–19:45","km":2.5,"mn":16,"hr":"135–150","pace":"6:05–6:35","main":"2.5 km 轻松唤醒慢跑（约 16 分钟）+ 拉伸","detail":["心率 135–150 次/分 ｜ 配速 6:05–6:35"],"strength":null,"test":null,"red":[],"notes":["19:15–19:45（严禁在周六练下肢力量）","全程可完整聊天，保持轻快"]},{"date":"2027-01-03","dow":6,"dowName":"周日","week":7,"dateLabel":"1/3","type":"long","zone":"E","title":"周末长距离 LSD","time":"19:00–20:15","km":9.0,"mn":56,"hr":"135–150","pace":"6:05–6:35","main":"9.0 km 周末长距离 LSD（约 56 分钟）","detail":["心率 135–150 次/分 ｜ 配速 6:05–6:35","19:00 准时开跑 · 较上周增加 0.5 km","严格压住心率，步频守住 180 步/分"],"strength":null,"test":null,"red":[],"notes":[]}]},{"n":8,"start":"2027-01-04","end":"2027-01-10","phase":"巩固期","label":"减量与 5K 测验②周","km":21.0,"change":"-8.7% 减量","days":[{"date":"2027-01-04","dow":0,"dowName":"周一","week":8,"dateLabel":"1/4","type":"rest","zone":null,"title":"完全休息日","time":"20:00–20:20","km":0.0,"mn":12,"hr":null,"pace":null,"main":"零路跑 · 泡沫轴轻滚放松 + 腹式呼吸","detail":["泡沫轴轻滚 15 分钟（含 5 分钟腹式呼吸）"],"strength":null,"test":null,"red":["不路跑、不练力量"],"notes":["本周全力减量蓄力，迎接周日 5K 测验","20:00–20:20（本周暂停力量 A 与 B）"]},{"date":"2027-01-05","dow":1,"dowName":"周二","week":8,"dateLabel":"1/5","type":"easy","zone":"E","title":"轻松跑（停力量 B）","time":"19:10–20:15","km":4.5,"mn":29,"hr":"135–150","pace":"6:05–6:35","main":"4.5 km 轻松跑（约 29 分钟）+ 4×80 米顺畅跑","detail":["心率 135–150 次/分 ｜ 配速 6:05–6:35","19:10 开跑","80 米约 22 秒/趟（走休 60 秒），步频 180","本周停练力量 B，跑完拉伸即结束"],"strength":null,"test":null,"red":[],"notes":[]},{"date":"2027-01-06","dow":2,"dowName":"周三","week":8,"dateLabel":"1/6","type":"rest","zone":null,"title":"完全休息日","time":null,"km":0.0,"mn":0,"hr":null,"pace":null,"main":"全天休息 · 零跑步、零下肢力量","detail":["零跑步、零下肢力量","晚餐 17:30–18:00 吃七分饱"],"strength":null,"test":null,"red":["零跑步、零下肢力量"],"notes":["正常饮食，保证充足睡眠","周四降为温和稳态跑"]},{"date":"2027-01-07","dow":3,"dowName":"周四","week":8,"dateLabel":"1/7","type":"quality","zone":"M","title":"赛前稳态（停力量 A）","time":"19:05–20:20","km":5.5,"mn":34,"hr":"152–164","pace":"5:55–6:10","main":"共 5.5 km：1.5 km E 区 + 3.0 km M 区 @ 5:55–6:10 + 1.0 km E 区","detail":["心率 152–164 次/分 ｜ 配速 5:55–6:10","19:05 开跑（约 34 分）","跑完即结束，不练力量","不拼速度，留足体能给周日 5K 测验"],"strength":null,"test":null,"red":[],"notes":[]},{"date":"2027-01-08","dow":4,"dowName":"周五","week":8,"dateLabel":"1/8","type":"rest","zone":null,"title":"完全休息日","time":null,"km":0.0,"mn":0,"hr":null,"pace":null,"main":"全天休息 · 零跑步、零下肢力量","detail":["零跑步、零下肢力量","晚餐 17:30–18:00 吃七分饱"],"strength":null,"test":null,"red":["零跑步、零下肢力量"],"notes":["检查跑步动态传感器电量","第 8 周可同步体检复查铁蛋白/维生素 D"]},{"date":"2027-01-09","dow":5,"dowName":"周六","week":8,"dateLabel":"1/9","type":"wake","zone":"E","title":"短程唤醒慢跑","time":"19:15–19:45","km":2.0,"mn":13,"hr":"135–150","pace":"6:05–6:35","main":"2.0 km 轻松唤醒慢跑（约 13 分钟）+ 拉伸","detail":["心率 135–150 次/分 ｜ 配速 6:05–6:35"],"strength":null,"test":null,"red":[],"notes":["19:15–19:45 · 严禁练下肢力量","活动开筋骨即停，早点休息"]},{"date":"2027-01-10","dow":6,"dowName":"周日","week":8,"dateLabel":"1/10","type":"test","zone":"I","title":"5 公里阶段测验 ②","time":"19:00–20:15","km":9.0,"mn":53,"hr":"178–190","pace":"4:55–5:05","main":"共 9.0 km：2k 热身 + 5.0 km 全力测验 + 2k 冷身","detail":["心率 178–190 次/分 ｜ 配速 4:55–5:05","19:00 开跑（详细分段流程见测验卡）","目标 ≤ 24 分 30 秒，无痛解锁 W9–12 新配速"],"strength":null,"test":"w8","red":[],"notes":[]}]},{"n":9,"start":"2027-01-11","end":"2027-01-17","phase":"强化期","label":"含全周期唯一间歇课","km":23.0,"change":"+9.5%","days":[{"date":"2027-01-11","dow":0,"dowName":"周一","week":9,"dateLabel":"1/11","type":"rest","zone":null,"title":"完全休息日","time":"20:00–20:20","km":0.0,"mn":12,"hr":null,"pace":null,"main":"零路跑 · 泡沫轴轻滚放松 + 腹式呼吸","detail":["泡沫轴轻滚 15 分钟（含 5 分钟腹式呼吸）"],"strength":null,"test":null,"red":["不路跑、不练力量"],"notes":["晨起空腹称重；本周恢复力量 A 与 B"]},{"date":"2027-01-12","dow":1,"dowName":"周二","week":9,"dateLabel":"1/12","type":"easy","zone":"E","title":"轻松跑 + 力量 B","time":"19:10–20:15","km":5.0,"mn":31,"hr":"135–150","pace":"5:55–6:25","main":"5.0 km 轻松跑（约 31 分钟）+ 6×80 米顺畅跑","detail":["心率 135–150 次/分 ｜ 配速 5:55–6:25","19:10 开跑 → 19:55 练力量 B（15–20 分）","80 米约 21 秒/趟（走休 60 秒），步频 180"],"strength":"B","test":null,"red":[],"notes":[]},{"date":"2027-01-13","dow":2,"dowName":"周三","week":9,"dateLabel":"1/13","type":"rest","zone":null,"title":"完全休息日","time":null,"km":0.0,"mn":0,"hr":null,"pace":null,"main":"全天休息 · 零跑步、零下肢力量","detail":["零跑步、零下肢力量","晚餐 17:30–18:00 吃七分饱"],"strength":null,"test":null,"red":["零跑步、零下肢力量"],"notes":["周四高强度间歇前 48 小时恢复窗口","保证充足碳水储备"]},{"date":"2027-01-14","dow":3,"dowName":"周四","week":9,"dateLabel":"1/14","type":"quality","zone":"I","title":"有氧间歇跑 + 力量 A","time":"19:05–20:20","km":6.0,"mn":36,"hr":"178–190","pace":"4:48–4:55","main":"共 6.0 km：1.5 km E + 4 × 0.8 km I 区 @ 4:48–4:55［组间慢跑 0.2 km×3］ + 0.7 km E","detail":["心率 178–190 次/分 ｜ 配速 4:48–4:55","19:05 开跑（约 36 分）","→ 19:55 练力量 A（20 分）","每组间慢跑 0.2 km（共 0.6 km）→ 19:55 练力量 A","很吃力但可控（约 5K 比赛速），全周期仅本周"],"strength":"A","test":null,"red":[],"notes":[]},{"date":"2027-01-15","dow":4,"dowName":"周五","week":9,"dateLabel":"1/15","type":"rest","zone":null,"title":"完全休息日","time":null,"km":0.0,"mn":0,"hr":null,"pace":null,"main":"全天休息 · 零跑步、零下肢力量","detail":["零跑步、零下肢力量","晚餐 17:30–18:00 吃七分饱"],"strength":null,"test":null,"red":["零跑步、零下肢力量"],"notes":["彻底消退间歇课与离心力量疲劳"]},{"date":"2027-01-16","dow":5,"dowName":"周六","week":9,"dateLabel":"1/16","type":"wake","zone":"E","title":"短程唤醒慢跑","time":"19:15–19:45","km":2.5,"mn":15,"hr":"135–150","pace":"5:55–6:25","main":"2.5 km 轻松唤醒慢跑（约 15 分钟）+ 拉伸","detail":["心率 135–150 次/分 ｜ 配速 5:55–6:25"],"strength":null,"test":null,"red":[],"notes":["19:15–19:45（严禁在周六练下肢力量）","全程可完整聊天，步频约 180 步/分"]},{"date":"2027-01-17","dow":6,"dowName":"周日","week":9,"dateLabel":"1/17","type":"long","zone":"E","title":"周末长距离 LSD","time":"19:00–20:15","km":9.5,"mn":58,"hr":"135–150","pace":"5:55–6:25","main":"9.5 km 周末长距离 LSD（约 58 分钟）","detail":["心率 135–150 次/分 ｜ 配速 5:55–6:25","19:00 准时开跑 · 较上周增加 0.5 km","严格压住心率，训后 30 分内补餐"],"strength":null,"test":null,"red":[],"notes":[]}]},{"n":10,"start":"2027-01-18","end":"2027-01-24","phase":"强化期","label":"长阈值 + 首破 10 公里","km":25.0,"change":"+8.7%","days":[{"date":"2027-01-18","dow":0,"dowName":"周一","week":10,"dateLabel":"1/18","type":"rest","zone":null,"title":"完全休息日","time":"20:00–20:20","km":0.0,"mn":12,"hr":null,"pace":null,"main":"零路跑 · 泡沫轴轻滚放松 + 腹式呼吸","detail":["泡沫轴轻滚 15 分钟（含 5 分钟腹式呼吸）"],"strength":null,"test":null,"red":["不路跑、不练力量"],"notes":["晨起空腹称重；本周日起单次超 60 分钟"]},{"date":"2027-01-19","dow":1,"dowName":"周二","week":10,"dateLabel":"1/19","type":"easy","zone":"E","title":"轻松跑 + 力量 B","time":"19:10–20:15","km":5.0,"mn":31,"hr":"135–150","pace":"5:55–6:25","main":"5.0 km 轻松跑（约 31 分钟）+ 6×80 米顺畅跑","detail":["心率 135–150 次/分 ｜ 配速 5:55–6:25","19:10 开跑 → 19:55 练力量 B（15–20 分）","80 米约 21 秒/趟（走休 60 秒），步频 180"],"strength":"B","test":null,"red":[],"notes":[]},{"date":"2027-01-20","dow":2,"dowName":"周三","week":10,"dateLabel":"1/20","type":"rest","zone":null,"title":"完全休息日","time":null,"km":0.0,"mn":0,"hr":null,"pace":null,"main":"全天休息 · 零跑步、零下肢力量","detail":["零跑步、零下肢力量","晚餐 17:30–18:00 吃七分饱"],"strength":null,"test":null,"red":["零跑步、零下肢力量"],"notes":["周四长阈值前 48 小时完整恢复窗口","全天碳水 250–350g、蛋白 70–80g"]},{"date":"2027-01-21","dow":3,"dowName":"周四","week":10,"dateLabel":"1/21","type":"quality","zone":"T","title":"阈值长巡航 + 力量 A","time":"19:05–20:20","km":6.5,"mn":38,"hr":"166–176","pace":"5:20–5:30","main":"共 6.5 km：1.5 km E + 2 × 2.0 km T 区 @ 5:20–5:30［组间慢跑 0.3 km×1］ + 0.7 km E","detail":["心率 166–176 次/分 ｜ 配速 5:20–5:30","19:05 开跑（约 38 分）","→ 19:55 练力量 A（20 分）","两组间慢跑 0.3 km → 19:55 练力量 A（25 分）","锻炼抗疲劳耐力；出门前 20 分盐水洗鼻"],"strength":"A","test":null,"red":[],"notes":[]},{"date":"2027-01-22","dow":4,"dowName":"周五","week":10,"dateLabel":"1/22","type":"rest","zone":null,"title":"完全休息日","time":null,"km":0.0,"mn":0,"hr":null,"pace":null,"main":"全天休息 · 零跑步、零下肢力量","detail":["零跑步、零下肢力量","晚餐 17:30–18:00 吃七分饱"],"strength":null,"test":null,"red":["零跑步、零下肢力量"],"notes":["准备好周日途中补水用的小水壶/补给点"]},{"date":"2027-01-23","dow":5,"dowName":"周六","week":10,"dateLabel":"1/23","type":"wake","zone":"E","title":"短程唤醒慢跑","time":"19:15–19:45","km":3.0,"mn":18,"hr":"135–150","pace":"5:55–6:25","main":"3.0 km 轻松唤醒慢跑（约 18 分钟）+ 拉伸","detail":["心率 135–150 次/分 ｜ 配速 5:55–6:25"],"strength":null,"test":null,"red":[],"notes":["19:15–19:45（严禁在周六练下肢力量）","全程可完整聊天，保持轻松"]},{"date":"2027-01-24","dow":6,"dowName":"周日","week":10,"dateLabel":"1/24","type":"long","zone":"M","title":"渐进长距离（超 10K）","time":"19:00–20:15","km":10.5,"mn":63,"hr":"152–164","pace":"5:40–5:55","main":"共 10.5 km（约 63 分）：前 8.5k 轻松 + 后 2.0k 稳态","detail":["心率 152–164 次/分 ｜ 配速 5:40–5:55","前 8.5k 配 5:55–6:25；后 2k 提速 5:40–5:55","19:00 开跑 · 第 35–40 分（约 6km）补水 150ml"],"strength":null,"test":null,"red":[],"notes":[]}]},{"n":11,"start":"2027-01-25","end":"2027-01-31","phase":"强化期","label":"全周期峰值周","km":27.0,"change":"+8.0% 峰值","days":[{"date":"2027-01-25","dow":0,"dowName":"周一","week":11,"dateLabel":"1/25","type":"rest","zone":null,"title":"完全休息日","time":"20:00–20:20","km":0.0,"mn":12,"hr":null,"pace":null,"main":"零路跑 · 泡沫轴轻滚放松 + 腹式呼吸","detail":["泡沫轴轻滚 15 分钟（含 5 分钟腹式呼吸）"],"strength":null,"test":null,"red":["不路跑、不练力量"],"notes":["晨起空腹称重；峰值周务必保证碳水摄入"]},{"date":"2027-01-26","dow":1,"dowName":"周二","week":11,"dateLabel":"1/26","type":"easy","zone":"E","title":"轻松跑 + 力量 B","time":"19:10–20:15","km":5.5,"mn":34,"hr":"135–150","pace":"5:55–6:25","main":"5.5 km 轻松跑（约 34 分钟）+ 6×80 米顺畅跑","detail":["心率 135–150 次/分 ｜ 配速 5:55–6:25","19:10 开跑 → 19:55 练力量 B（15–20 分）","80 米约 21 秒/趟（走休 60 秒），步频 180"],"strength":"B","test":null,"red":[],"notes":[]},{"date":"2027-01-27","dow":2,"dowName":"周三","week":11,"dateLabel":"1/27","type":"rest","zone":null,"title":"完全休息日","time":null,"km":0.0,"mn":0,"hr":null,"pace":null,"main":"全天休息 · 零跑步、零下肢力量","detail":["零跑步、零下肢力量","晚餐 17:30–18:00 吃七分饱"],"strength":null,"test":null,"red":["零跑步、零下肢力量"],"notes":["周四 10K 专项课前 48 小时恢复窗口","全天碳水 300–350g，为峰值负荷蓄能"]},{"date":"2027-01-28","dow":3,"dowName":"周四","week":11,"dateLabel":"1/28","type":"quality","zone":"GP","title":"10K 专项课 + 力量 A减半","time":"19:05–20:20","km":7.0,"mn":41,"hr":"174–182","pace":"5:10–5:18","main":"共 7.0 km：1.5 km E + 3 × 1.5 km GP 配速 @ 5:10–5:18［组间慢跑 0.25 km×2］ + 0.5 km E","detail":["心率 174–182 次/分 ｜ 配速 5:10–5:18","19:05 开跑（约 41 分）","→ 19:55 练力量 A（20 分）","每组间慢跑 0.25 km（共 0.5 km）→ 19:55 力量 A 减半","提前演练 10 公里目标节奏，专注 180 步频"],"strength":"A","test":null,"red":[],"notes":[]},{"date":"2027-01-29","dow":4,"dowName":"周五","week":11,"dateLabel":"1/29","type":"rest","zone":null,"title":"完全休息日","time":null,"km":0.0,"mn":0,"hr":null,"pace":null,"main":"全天休息 · 零跑步、零下肢力量","detail":["零跑步、零下肢力量","晚餐 17:30–18:00 吃七分饱"],"strength":null,"test":null,"red":["零跑步、零下肢力量"],"notes":["消退周四高强度负荷，早睡恢复"]},{"date":"2027-01-30","dow":5,"dowName":"周六","week":11,"dateLabel":"1/30","type":"wake","zone":"E","title":"短程唤醒慢跑","time":"19:15–19:45","km":3.0,"mn":18,"hr":"135–150","pace":"5:55–6:25","main":"3.0 km 轻松唤醒慢跑（约 18 分钟）+ 拉伸","detail":["心率 135–150 次/分 ｜ 配速 5:55–6:25"],"strength":null,"test":null,"red":[],"notes":["19:15–19:45（严禁在周六练下肢力量）","全程可完整聊天，储备体能"]},{"date":"2027-01-31","dow":6,"dowName":"周日","week":11,"dateLabel":"1/31","type":"long","zone":"E","title":"峰值长距离（破纪录）","time":"19:00–20:15","km":11.5,"mn":70,"hr":"135–150","pace":"5:55–6:25","main":"11.5 km 峰值长距离（破纪录）（约 70 分钟）","detail":["心率 135–150 次/分 ｜ 配速 5:55–6:25","19:00 准时开跑 · 第 35–40 分（约 6km）补水 150ml","安全突破 11.3km 最长纪录，严禁前半程抢快"],"strength":null,"test":null,"red":[],"notes":[]}]},{"n":12,"start":"2027-02-01","end":"2027-02-07","phase":"减量检验","label":"赛前减量与 10 公里检验③周","km":21.5,"change":"-20.4% 减量","days":[{"date":"2027-02-01","dow":0,"dowName":"周一","week":12,"dateLabel":"2/1","type":"rest","zone":null,"title":"完全休息日","time":"20:00–20:20","km":0.0,"mn":12,"hr":null,"pace":null,"main":"零路跑 · 泡沫轴轻滚放松 + 腹式呼吸","detail":["泡沫轴轻滚 15 分钟（含 5 分钟腹式呼吸）"],"strength":null,"test":null,"red":["不路跑、不练力量"],"notes":["跑量回撤 20.4%，让肌肉糖原完全回满","20:00–20:20（本周全面停练力量 A 与 B）"]},{"date":"2027-02-02","dow":1,"dowName":"周二","week":12,"dateLabel":"2/2","type":"easy","zone":"E","title":"轻松跑（停力量 B）","time":"19:10–20:15","km":4.5,"mn":28,"hr":"135–150","pace":"5:55–6:25","main":"4.5 km 轻松跑（约 28 分钟）+ 4×80 米顺畅跑","detail":["心率 135–150 次/分 ｜ 配速 5:55–6:25","19:10 开跑","80 米约 21 秒/趟（走休 60 秒），步频 180","本周停练力量 B，跑完拉伸即结束"],"strength":null,"test":null,"red":[],"notes":[]},{"date":"2027-02-03","dow":2,"dowName":"周三","week":12,"dateLabel":"2/3","type":"rest","zone":null,"title":"完全休息日","time":null,"km":0.0,"mn":0,"hr":null,"pace":null,"main":"全天休息 · 零跑步、零下肢力量","detail":["零跑步、零下肢力量","晚餐 17:30–18:00 吃七分饱"],"strength":null,"test":null,"red":["零跑步、零下肢力量"],"notes":["保证充足碳水与睡眠","周四做最后一次短程比赛配速唤醒"]},{"date":"2027-02-04","dow":3,"dowName":"周四","week":12,"dateLabel":"2/4","type":"quality","zone":"GP","title":"赛前唤醒（停力量 A）","time":"19:05–20:20","km":4.5,"mn":27,"hr":"174–182","pace":"5:10–5:18","main":"共 4.5 km：2.0 km E + 2 × 0.8 km GP 配速 @ 5:10–5:18［组间慢跑 0.2 km×1］ + 0.7 km E","detail":["心率 174–182 次/分 ｜ 配速 5:10–5:18","19:05 开跑（约 27 分）","跑完即结束，不练力量","两组间慢跑 0.2 km · 跑完即结束，不练力量","找到比赛配速脚感即收工，绝不多跑"],"strength":null,"test":null,"red":[],"notes":[]},{"date":"2027-02-05","dow":4,"dowName":"周五","week":12,"dateLabel":"2/5","type":"rest","zone":null,"title":"完全休息日","time":null,"km":0.0,"mn":0,"hr":null,"pace":null,"main":"全天休息 · 零跑步、零下肢力量","detail":["零跑步、零下肢力量","晚餐 17:30–18:00 吃七分饱"],"strength":null,"test":null,"red":["零跑步、零下肢力量"],"notes":["检查手表与跑步动态传感器","三餐正常摄入米饭面条等优质碳水","避免生冷辛辣，防肠胃与鼻炎波动"]},{"date":"2027-02-06","dow":5,"dowName":"周六","week":12,"dateLabel":"2/6","type":"rest","zone":null,"title":"完全休息日（备赛周日长距离）","time":null,"km":0.0,"mn":0,"hr":null,"pace":null,"main":"0.0 km · 全天休息","detail":["严禁任何下肢力量训练","为周日长距离储备体力"],"strength":null,"test":null,"red":["严禁在周六安排任何下肢力量训练"],"notes":["全天完全休息（第 12 周周六全休）","准备好明日途中补水用的 150 ml 温水"]},{"date":"2027-02-07","dow":6,"dowName":"周日","week":12,"dateLabel":"2/7","type":"test","zone":"GP","title":"10 公里成果检验 ③","time":"19:00–20:15","km":12.5,"mn":72,"hr":"174–182","pace":"5:10–5:18","main":"共 12.5 km：1.5k 热身 + 10.0 km 检验跑 + 1k 冷身","detail":["心率 174–182 次/分 ｜ 配速 5:10–5:18","19:00 开跑 · 第 35–40 分（约 6km）补水 150ml","1–3K 压在 5:16–5:20，后程靠摆臂守住 ≥180 步频"],"strength":null,"test":"w12","red":[],"notes":[]}]}]};
 const DAYS = PLAN.weeks.flatMap(w => w.days);
-const ZC = {E:'#34d399',M:'#60a5fa',T:'#fbbf24',GP:'#f87171',I:'#a78bfa',ST:'#22d3ee'};
+const ZC = {E:'#5c7a5e',M:'#6b7f9e',T:'#b87320',GP:'#c96442',I:'#7d6487',ST:'#7d8f8a'};
 const ZNAME = {E:'E 区',M:'M 区',T:'T 区',GP:'GP',I:'I 区',ST:'ST'};
 const LS = 'runkit.v1';
 const DEF = {tab:'today', city:null, weather:true, hrvBase:97, rhrBase:55, checks:{}, daily:{}, seen:{}, runs:[] };
@@ -887,7 +900,7 @@ function zTotals(runs){
 function mins(s){ return Math.round((s||0)/60); }
 function zoneBar(tot){
   const sum = Object.values(tot).reduce((a,b)=>a+b,0) || 1;
-  const cols = {warm:'#475569',E:'#34d399',M:'#60a5fa',T:'#fbbf24',GP:'#f87171',I:'#a78bfa',over:'#ef4444'};
+  const cols = {warm:'#a8a49a',E:'#5c7a5e',M:'#6b7f9e',T:'#b87320',GP:'#c96442',I:'#7d6487',over:'#c43c3c'};
   const segs = ['warm','E','M','T','GP','I','over'].filter(z=>tot[z]).map(z=>{
     const w=(tot[z]/sum*100);
     return '<i style="width:'+w.toFixed(1)+'%;background:'+cols[z]+'"></i>';
