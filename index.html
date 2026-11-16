@@ -193,7 +193,7 @@ const LS_PREFIX = 'runkit.v2.';
 const LS_WHO = 'runkit.v2.who';
 const LS_LEGACY = 'runkit.v1';
 const LS_FRIEND_LEGACY = 'runkit.friend.v1';
-const DEF = {tab:'today', city:null, weather:true, hrvBase:97, rhrBase:55, checks:{}, daily:{}, seen:{}, runs:[],
+const DEF = {tab:'today', city:null, weather:true, hrvBase:97, rhrBase:55, checks:{}, daily:{}, seen:{}, runs:[], wxLast:null,
   profile:{sex:'male', age:22, height:167, weight:50, rhr:55, hrmax:193} };
 
 /* ---------- 存储层 ----------
@@ -220,7 +220,7 @@ const Store = (function(){
 let saveErr = null;   // null | 'no-store' | 'quota' | 'err'
 
 let S = null;   // 选档案后由 setWho 换成该档案的记录
-let cache = { weather:null, at:0, dayKey:null };
+let cache = { weather:null, at:0, dayKey:null, err:null };
 let curSheet = null;
 
 function lsKey(id){ return LS_PREFIX + id; }
@@ -255,6 +255,8 @@ function normalizeState(o){
   if(typeof s.rhrBase !== 'number' || !(s.rhrBase > 30)) s.rhrBase = s.profile.rhr || 55;
   if(typeof s.hrvBase !== 'number' || !(s.hrvBase > 20)) s.hrvBase = 97;
   if(s.city != null && !isObj(s.city)) s.city = null;
+  if(s.wxLast != null && !isObj(s.wxLast)) s.wxLast = null;
+  if(isObj(s.wxLast) && !isObj(s.wxLast.w)) s.wxLast = null;
   if(s.startDate != null && !/^\d{4}-\d{2}-\d{2}$/.test(String(s.startDate))) s.startDate = null;
   if(s.tab != null && ['today','plan','data','log','set'].indexOf(s.tab) < 0) s.tab = 'today';
   return s;
@@ -401,33 +403,91 @@ function weatherAdvice(w, day){
   if(day && day.type==='rest') return {cls:'ok', t:'今天休息日，不用管天气'};
   return {cls:'ok', t:'天气条件正常，按课表出门'};
 }
+const WX_TTL = 30 * 60 * 1000;   // 天气缓存 30 分钟
+const WX_TIMEOUT = 8000;         // 单次请求超时（毫秒）
+const WX_TRIES = 2;              // 卡住的网络下重试一次常常就通了
+
+/* 带超时的 JSON 请求。没有超时是本项目踩过的真实故障：
+   网络偶尔整段卡死时 fetch 永远不会 settle，「取天气…」就一直转下去。 */
+function fetchJSON(url, ms){
+  const ctl = (typeof AbortController !== 'undefined') ? new AbortController() : null;
+  const timer = setTimeout(function(){ try{ if(ctl) ctl.abort(); }catch(e){} }, ms);
+  const opt = {cache:'no-store'};
+  if(ctl) opt.signal = ctl.signal;
+  return fetch(url, opt).then(function(r){
+    clearTimeout(timer);
+    if(!r.ok) throw new Error('HTTP ' + r.status);
+    return r.json();
+  }, function(e){ clearTimeout(timer); throw e; });
+}
+async function tryJSON(url, ms, tries){
+  let last = null;
+  for(let i = 0; i < tries; i++){
+    try{ return await fetchJSON(url, ms); }
+    catch(e){
+      last = (e && e.name === 'AbortError') ? new Error('超时') : e;
+      if(i < tries - 1) await new Promise(function(r){ setTimeout(r, 500); });
+    }
+  }
+  let msg = (last && last.message) || '网络不可用';
+  if(/Failed to fetch|NetworkError|Load failed/i.test(msg)) msg = '网络连不上';
+  throw new Error(msg);
+}
+
+/* 上次成功取到的天气（存在 S.wxLast 里，跨刷新保留） */
+function wxLast(){
+  const l = S.wxLast;
+  if(!l || typeof l !== 'object' || !l.w || typeof l.w !== 'object' || !l.w.ok) return null;
+  return l;
+}
+function clockOf(ts){
+  if(!ts) return '';
+  const d = new Date(ts);
+  return pad(d.getHours()) + ':' + pad(d.getMinutes());
+}
+
 async function loadWeather(force){
   if(!S.city || S.city.lat==null) return {ok:false, err:'未设置城市'};
-  const key = S.city.lat+','+S.city.lon;
-  if(!force && cache.weather && cache.dayKey===key && Date.now()-cache.at < 30*60*1000) return cache.weather;
-  const d = new Date(); const ymd = iso(d);
+  const key = S.city.lat + ',' + S.city.lon;
+  if(!force && cache.weather && cache.dayKey===key && Date.now()-cache.at < WX_TTL) return cache.weather;
+  const ymd = iso(new Date());
   const base = 'latitude='+S.city.lat+'&longitude='+S.city.lon+'&timezone=Asia%2FShanghai';
   const u1 = 'https://api.open-meteo.com/v1/forecast?'+base+'&hourly=temperature_2m,apparent_temperature,precipitation_probability,weather_code,wind_speed_10m&forecast_days=3';
   const u2 = 'https://air-quality-api.open-meteo.com/v1/air-quality?'+base+'&hourly=pm2_5,european_aqi&forecast_days=3';
-  try{
-    const [r1,r2] = await Promise.all([fetch(u1), fetch(u2)]);
-    const a = await r1.json(); let b = {};
-    try{ b = await r2.json(); }catch(e){}
-    const idx = (a.hourly && a.hourly.time) ? a.hourly.time.indexOf(ymd+'T19:00') : -1;
-    if(idx < 0) return {ok:false, err:'天气数据缺 19:00 时段'};
-    const ai = (b.hourly && b.hourly.time) ? b.hourly.time.indexOf(ymd+'T19:00') : -1;
-    const w = {
-      ok:true,
-      temp:a.hourly.temperature_2m[idx], feels:a.hourly.apparent_temperature[idx],
-      pop:a.hourly.precipitation_probability ? a.hourly.precipitation_probability[idx] : null,
-      code:a.hourly.weather_code[idx],
-      wind:a.hourly.wind_speed_10m ? a.hourly.wind_speed_10m[idx] : null,
-      aqi:(ai>=0 && b.hourly.european_aqi) ? b.hourly.european_aqi[ai] : null,
-      pm:(ai>=0 && b.hourly.pm2_5) ? b.hourly.pm2_5[ai] : null
-    };
-    cache = { weather:w, at:Date.now(), dayKey:key };
-    return w;
-  }catch(e){ return {ok:false, err:'取天气失败（'+(e.message||'网络')+'）'}; }
+
+  /* 天气是主角：单独取，失败就带着原因返回，不再被 AQI 连累 */
+  let a = null, err = null;
+  try{ a = await tryJSON(u1, WX_TIMEOUT, WX_TRIES); }
+  catch(e){ err = e; }
+  const fail = function(why){
+    cache = { weather:null, at:0, dayKey:key, err:why };
+    return {ok:false, err:why};
+  };
+  if(!a || !a.hourly || !a.hourly.time){
+    return fail('取不到天气（' + ((err && err.message) || '没有数据') + '）');
+  }
+  const idx = a.hourly.time.indexOf(ymd + 'T19:00');
+  if(idx < 0) return fail('天气数据里没有今晚 19:00');
+
+  /* 空气质量是配角：取不到就留空，绝不影响天气卡 */
+  let b = {};
+  try{ b = await tryJSON(u2, WX_TIMEOUT, 1); }catch(e){ b = {}; }
+
+  const ai = (b.hourly && b.hourly.time) ? b.hourly.time.indexOf(ymd+'T19:00') : -1;
+  const w = {
+    ok:true,
+    temp:a.hourly.temperature_2m[idx], feels:a.hourly.apparent_temperature[idx],
+    pop:a.hourly.precipitation_probability ? a.hourly.precipitation_probability[idx] : null,
+    code:a.hourly.weather_code[idx],
+    wind:a.hourly.wind_speed_10m ? a.hourly.wind_speed_10m[idx] : null,
+    aqi:(ai>=0 && b.hourly && b.hourly.european_aqi) ? b.hourly.european_aqi[ai] : null,
+    pm:(ai>=0 && b.hourly && b.hourly.pm2_5) ? b.hourly.pm2_5[ai] : null,
+    at:Date.now()
+  };
+  cache = { weather:w, at:Date.now(), dayKey:key, err:null };
+  S.wxLast = { key:key, at:Date.now(), w:w };   // 存下来：下次连不上也能显示旧数据
+  save();
+  return w;
 }
 
 /* ---------- 环境自检 ---------- */
@@ -608,13 +668,7 @@ function gateCard(){
   </div>`;
 }
 
-function weatherCard(day){
-  if(!S.weather) return '';
-  const w = cache.weather;
-  if(!S.city) return `<div class="card tight"><div class="row"><div class="sp muted">想看天气就先设城市</div>
-     <button class="btn sm" data-act="tab" data-tab="set">去设置</button></div></div>`;
-  if(!w || !w.ok) return `<div class="card tight"><div class="row"><div class="sp muted tiny">${esc((w&&w.err)||'点一下取今晚 19:00 的天气')}</div>
-     <button class="btn sm" data-act="wx">取天气</button></div></div>`;
+function wxCardBody(w, day, staleWhy){
   const a = weatherAdvice(w, day);
   const code = w.code>=95 ? '雷雨' : w.code>=80 ? '阵雨' : w.code>=61 ? '雨' : w.code>=45 ? '雾' : w.code>=3 ? '阴' : '晴';
   return `<div class="card">
@@ -627,6 +681,25 @@ function weatherCard(day){
       <div class="kv"><div class="k">空气</div><div class="v">${w.aqi==null?'—':Math.round(w.aqi)}</div></div>
     </div>
     ${a?`<div class="advice ${a.cls}">${esc(a.t)}</div>`:''}
+    ${staleWhy ? `<div class="tiny" style="margin-top:8px">⚠ ${esc(staleWhy)}，上面是 ${clockOf(w.at)} 取到的数据。不影响课表与打卡。</div>` : ''}
+  </div>`;
+}
+
+function weatherCard(day){
+  if(!S.weather) return '';
+  if(!S.city) return `<div class="card tight"><div class="row"><div class="sp muted">想看天气就先设城市</div>
+     <button class="btn sm" data-act="tab" data-tab="set">去设置</button></div></div>`;
+  const w = cache.weather;
+  if(w && w.ok) return wxCardBody(w, day, '');
+  /* 取失败：能把上次成功的显示出来就显示，并说明为什么是旧的 */
+  const why = (w && w.err) || cache.err || '还没取过';
+  const last = wxLast();
+  const key = S.city.lat + ',' + S.city.lon;
+  if(last && last.key === key) return wxCardBody(last.w, day, why);
+  return `<div class="card tight">
+    <div class="row"><div class="sp muted tiny">${esc(why)}</div>
+      <button class="btn sm" data-act="wx">重试</button></div>
+    <div class="tiny" style="margin-top:6px">天气只作参考，课表与打卡完全不受影响。</div>
   </div>`;
 }
 
@@ -1634,8 +1707,13 @@ document.addEventListener('click', async (e)=>{
     save(); render(); return;
   }
   if(act==='wx'){
+    /* 网络可能卡住 8 秒再重试一次，这段时间要给反馈，否则像死机 */
     btn.disabled = true; btn.textContent = '取天气…';
+    const hint = setTimeout(function(){
+      try{ if(btn.isConnected !== false) btn.textContent = '还在重试…'; }catch(e){}
+    }, 4000);
     await loadWeather(true);
+    clearTimeout(hint);
     render(); return;
   }
   if(act==='ck'){
@@ -1748,8 +1826,10 @@ document.addEventListener('click', async (e)=>{
 
 async function maybeWeather(){
   if(!S.weather || !S.city || S.city.lat==null) return;
-  const w = await loadWeather(false);
-  if(w && w.ok) { if(S.tab==='today') render(); }
+  await loadWeather(false);
+  /* 成功失败都要重画：失败时要把「取不到的原因」显示出来，
+     否则卡片会一直停在「还没取过」，用户看不出是真失败还是在等。 */
+  if(S.tab==='today') render();
 }
 
 const __tab = Q.get('tab');
