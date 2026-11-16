@@ -1,4 +1,4 @@
-# 12 周跑步 · 今日课表（手机网页应用）
+﻿# 12 周跑步 · 今日课表（手机网页应用）
 
 把《12 周跑步恢复与进阶执行手册》《随身口袋手册》《技术评估档案》三份 PDF 变成打开即看的手机界面。
 
@@ -232,7 +232,9 @@ python scripts\import_runs.py
     check_plan.py          课表自洽校验（结构 / 日期连续 / 周合计 / 引用完整）
     extract_embedded_plan.py  从单文件课表 HTML 里抠出 PLAN 数据
     make_icons.py          生成 PWA 图标（改主题色时重跑）
-    make_docs.py           生成两份 Word：交接文档 + 开发过程说明
+    docx_style.py          三份 Word 共用的排版层
+    make_docs.py           生成交接文档 + 开发过程说明
+    make_user_guide.py     生成给使用者看的《使用说明》
     make_check_table.py    生成校对表.md
     extract_pdf_text.py    从 PDF 抽取文本（PDF 更新后用）
     deploy_github.py       上传 dist 到 GitHub Pages（走 API，不用装 git）
@@ -278,12 +280,20 @@ python scripts\import_runs.py
 
 | 文件 | 给谁看 | 内容 |
 |---|---|---|
+| `使用说明-给朋友的12周跑步指南.docx` | **使用者本人**（不读代码的人） | 怎么装到手机、每天量什么、怎么看灯、跑完怎么打卡、力量怎么做、常见问题 |
 | `交接文档-12周跑步应用.docx` | 接手维护的人 | 目录职责、三种常见改动的完整流程、构建发布、数据模型、算法口径、测试体系、排障手册、踩过的坑、待办 |
 | `开发过程说明-从三份PDF到手机应用.docx` | 想知道"为什么这么做"的人 | 11 个阶段的演进与每阶段的坑、6 条关键决策的理由、外部审查三轮的记录、复盘 |
 | `README.md` | 所有人 | 概览、更新记录、给朋友用要不要服务器、验证状态 |
 | `校对表.md` | 核对课表数据的人 | 逐周跑量与 PDF 原文对照 |
 
-两份 Word 都由 `python scripts/make_docs.py` 生成，内容有变动时重跑即可，不要手改文档。
+三份 Word 都由脚本生成，内容有变动时重跑即可，不要手改文档：
+
+```
+python scripts\make_user_guide.py    # 使用说明（数字取自 plan-friend.json）
+python scripts\make_docs.py          # 交接文档 + 开发过程说明
+```
+
+排版层统一在 `scripts/docx_style.py`，三份文档共用。
 
 ## 已知限制
 
