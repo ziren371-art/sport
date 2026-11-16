@@ -762,6 +762,10 @@ function viewSet(){
     <div class="card">
       <b>个人资料</b>
       <div class="tiny" style="margin:4px 0 10px">只影响分析与负荷计算，<b>不会改动 12 周课表</b>；课表的绝对心率与配速仍以 PDF 为准。</div>
+      ${(S.seen && S.seen.pTip) ? '' : `<div class="advice warn" style="margin:0 0 11px;font-size:12.5px">
+        <div>下面这些是<b>示例数据</b>（167cm / 50kg / 静息 55）。第一次用请改成本人的，否则负荷与红黄绿灯会算偏。</div>
+        <div class="row" style="margin-top:7px"><div class="sp"></div>
+          <button class="btn sm" data-act="dismissPTip">知道了</button></div></div>`}
       <div class="grid2">
         <div><label class="f">性别（影响 TRIMP 系数）</label>
           <div class="seg" id="segSex">
@@ -1472,6 +1476,7 @@ document.addEventListener('click', async (e)=>{
     return;
   }
   if(act==='dismissOnboard'){ S.seen = Object.assign({}, S.seen, {onboard:1}); save(); render(); return; }
+  if(act==='dismissPTip'){ S.seen = Object.assign({}, S.seen, {pTip:1, onboard:1}); save(); render(); return; }
   if(act==='day'){ showDay(btn.dataset.date); return; }
   if(act==='str'){ showStrength(btn.dataset.m); return; }
   if(act==='test'){ showTest(btn.dataset.t); return; }
