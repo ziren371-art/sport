@@ -6,6 +6,15 @@
 
 ## 更新记录
 
+- **2026-11-16 · 修「设置城市后取天气一直卡住」**
+  - 实测 `api.open-meteo.com` 在这条网络上会**间歇性整段卡死**（同一地址一次 20 秒超时、一次 0.87 秒返回）。原代码 `fetch` 没有任何超时，`Promise.all` 会一直等，按钮就永远停在「取天气…」
+  - 所有天气请求加 **8 秒超时（AbortController）+ 重试 1 次**；天气与空气质量拆开取，AQI 失败不再连累天气
+  - 成功结果写进 `S.wxLast` 持久化：取不到时显示「上次 X:XX 取到的数据」+ 失败原因，并说明不影响课表
+  - 失败原因单独存 `cache.err`。原来失败时 `cache.weather` 是 null，原因永远显示成「还没取过」——这个是截图时看出来的
+  - 英文报错翻了人话（`Failed to fetch` → 网络连不上）
+  - 新增 `scripts/test_weather.mjs`：用**永不返回的 fetch** 验证「卡死也能在有限时间内结束」，实测 16.5 秒返回而不是永久挂起
+  - 测试 172 → **184 项**（另加 10 项天气行为测试）
+
 - **2026-11-16 · 第二轮外部审查：7 条全部核实为真，逐条修掉**
   - **P0 早停失效**：`gate` / `pain` 分支写 `S.daily` 用的是课表日期，而 `verdict()` / `gateCard()` 读真实日期 —— 平移过课表后，填的 HRV 存进另一个键，一刷新就"清空"，红黄绿灯形同虚设。改成统一用 `todayISO()`
   - **P0 熔断失效**：`verdict()` 的"未填写 HRV"早返排在按压痛判定**之前**，没戴 HRV 设备的人勾了胫骨按压痛也不会报红灯。把 `m.pain` 提到最前
@@ -243,7 +252,7 @@ python scripts\import_runs.py
     runs_lib.py            TCX/GPX/FIT 解析与区间判定
     import_runs.py         导入跑步记录 → 周报 / 月报 / 达标判定
     test_runs.py / test_formats.py / test_interval.py / stress_test.py
-    test.mjs               172 项自动测试（日期/闸门/天气/渲染/休息日/存储降级/PWA/双档案/平移/按基线判灯/损坏存储）
+    test.mjs               184 项自动测试（日期/闸门/天气/渲染/休息日/存储降级/PWA/双档案/平移/按基线判灯/损坏存储）
   源码分段/                  源码的分片文本（给收不了文件、只能收粘贴的工具用）
   _reference/               朋友课表原始 HTML（Argon 生成的那份，数据已抽取进 src）
   截图/                     界面截图
@@ -333,7 +342,7 @@ python scripts\make_docs.py          # 交接文档 + 开发过程说明
 ## 验证状态
 
 - ✅ 课表数据：`check_plan.py` 校验两份课表结构与数字自洽（我 250.5 km / 朋友 183.0 km）
-- ✅ 自动测试：`test.mjs` **172 项**（含休息日不打卡、存储降级、PWA 引用完整性）+ Python 侧 `test_runs` / `test_formats` / `test_interval` / `stress_test`（32 项）全部通过
+- ✅ 自动测试：`test.mjs` **184 项**（含休息日不打卡、存储降级、PWA 引用完整性）+ Python 侧 `test_runs` / `test_formats` / `test_interval` / `stress_test`（32 项）全部通过
 - ✅ 界面：无头 Chrome 实拍 13 个界面状态，检查过 5 个页签与中段滚动
 - ⚠️ 天气接口：开发环境无外网，**未能对 Open-Meteo 做真机联网验证**；代码里请求失败会显示"取天气失败"，课表与打卡完全不受影响。第一次在手机上打开时请确认城市（会自动推断）并点一次刷新。
 - ⚠️ PWA 安装：只能在真实 https 环境验收（本地 file:// 不注册 Service Worker）。装好后用设置页「环境自检 → 已装到桌面」确认。
