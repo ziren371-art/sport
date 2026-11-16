@@ -239,8 +239,28 @@ function freshState(){
   }
   return s;
 }
+/* 结构归一：localStorage 被手改、导入别人编辑过的备份、老版本字段缺失时，
+   Object.assign 会把 checks/daily 直接盖成 null，于是 render 里 S.checks[d.date] 抛错 →
+   整页白屏且无法自愈。这里逐字段校验类型，不合法的一律退回默认值。 */
+function normalizeState(o){
+  const base = freshState();
+  if(!o || typeof o !== 'object' || Array.isArray(o)) return base;
+  const s = Object.assign(base, o);
+  const isObj = v => !!v && typeof v === 'object' && !Array.isArray(v);
+  if(!isObj(s.checks)) s.checks = {};
+  if(!isObj(s.daily)) s.daily = {};
+  if(!isObj(s.seen)) s.seen = {};
+  if(!Array.isArray(s.runs)) s.runs = [];
+  s.profile = Object.assign(freshState().profile, isObj(s.profile) ? s.profile : {});
+  if(typeof s.rhrBase !== 'number' || !(s.rhrBase > 30)) s.rhrBase = s.profile.rhr || 55;
+  if(typeof s.hrvBase !== 'number' || !(s.hrvBase > 20)) s.hrvBase = 97;
+  if(s.city != null && !isObj(s.city)) s.city = null;
+  if(s.startDate != null && !/^\d{4}-\d{2}-\d{2}$/.test(String(s.startDate))) s.startDate = null;
+  if(s.tab != null && ['today','plan','data','log','set'].indexOf(s.tab) < 0) s.tab = 'today';
+  return s;
+}
 function loadState(id){
-  try{ const o = JSON.parse(Store.read(lsKey(id))||'{}'); return Object.assign(freshState(), o); }
+  try{ return normalizeState(JSON.parse(Store.read(lsKey(id))||'{}')); }
   catch(e){ return freshState(); }
 }
 S = freshState();
@@ -334,7 +354,7 @@ function snapStart(dISO){
 /* URL 预览：?date=2026-11-19 看某天（按【用户日期】解释），?tab=plan 直接进某页 */
 const Q = new URLSearchParams(location.search);
 const PREVIEW = Q.get('date');
-function curDate(){
+function planToday(){
   if(PREVIEW){ const p = pdOf(PREVIEW); if(dayByDate(p)) return p; }
   return pdOf(todayISO());
 }
@@ -350,9 +370,10 @@ function verdict(){
   const hrv = m.hrv, rhr = m.rhr;
   const base = S.hrvBase || 97;
   const rB = S.rhrBase || 55;
-  if(hrv==null || hrv==='') return {k:null, label:'未填写', tip:'填今天的 HRV 与静息心率，自动判断能不能照常跑', cls:'muted'};
+  /* 按压痛排在「未填写」之前：没戴 HRV 设备的人勾了按压痛，也必须立刻看到红灯。 */
   if(m.pain) return {k:'red', label:'红灯 · 停跑 48 小时', cls:'bad',
     tip:'出现膝盖/胫骨/跟腱按压痛 → 零跑步、零力量，休息 48 小时后再评估'};
+  if(hrv==null || hrv==='') return {k:null, label:'未填写', tip:'填今天的 HRV 与静息心率，自动判断能不能照常跑', cls:'muted'};
   const r = hrv / base;
   if(r <= 0.804 || (rhr && rhr >= rB+10)) return {k:'red', label:'红灯 · 停跑 48 小时', cls:'bad',
     tip:'HRV 低于基线 1.5 个标准差，或静息心率比你的基线（'+rB+'）高 10 次以上 → 停跑休息 48 小时'};
@@ -368,7 +389,7 @@ function weatherAdvice(w, day){
   if(w.aqi!=null && w.aqi>120) return {cls:'bad', t:'空气指数 '+Math.round(w.aqi)+'（>120）：改室内力量或跳绳 5 分热身；仅鼻塞无发烧可慢跑 20–30 分钟'};
   if(w.pop!=null && w.pop>=60) return {cls:'warn', t:'降水概率 '+w.pop+'%：改室内力量课；严禁补跑叠加，直接忽略今天这一课'};
   if(w.code>=95) return {cls:'warn', t:'雷雨天气：改室内力量课，不要出门'};
-  if(w.feels!=null && w.feels<=5) return {cls:'warn', t:'体感 '+Math.round(w.feels)+'°C 偏冷：提前 20 分盐水洗鼻，前 10 分钟压到 6:30–6:50'};
+  if(w.feels!=null && w.feels<=5) return {cls:'warn', t:'体感 '+Math.round(w.feels)+'°C 偏冷：提前 20 分盐水洗鼻，前 10 分钟压到 E 区上限（≤' + eMaxHr() + ' 次/分）'};
   if(w.feels!=null && w.feels>=28) return {cls:'warn', t:'体感 '+Math.round(w.feels)+'°C 偏热：以心率为锚，别看配速，必要时整体降 10 秒/km'};
   if(day && day.type==='rest') return {cls:'ok', t:'今天休息日，不用管天气'};
   return {cls:'ok', t:'天气条件正常，按课表出门'};
@@ -514,14 +535,14 @@ function render(){
 }
 
 function todayMeta(){
-  const t = curDate();
+  const t = planToday();
   const st = PLAN.meta.start, en = PLAN.meta.end;
   return {t, before: t < st, after: t > en, toStart: diffDays(t, st)};
 }
 
 function viewToday(){
   const m = todayMeta();
-  const d = parseISO(m.t);
+  const d = parseISO(udOf(m.t));   // 大标题显示用户日期，不是课表日期
   const week = ['周日','周一','周二','周三','周四','周五','周六'][d.getDay()];
   const head = `<div class="top">
       <div><div class="d1">${d.getMonth()+1} 月 ${d.getDate()} 日</div>
@@ -532,7 +553,7 @@ function viewToday(){
   if(m.before){
     const d1 = DAYS[0];
     return head + `<div class="card tight" style="border-color:var(--accent-soft);background:var(--accent-soft)">
-        <div class="row"><div class="sp" style="font-weight:700">计划明天开始 · 先看一眼第 1 天</div></div>
+        <div class="row"><div class="sp" style="font-weight:700">${m.toStart === 1 ? '计划明天开始' : '距开跑还有 ' + m.toStart + ' 天'} · 先看一眼第 1 天</div></div>
         <div class="tiny" style="margin-top:4px">${udOf(PLAN.meta.start)} → ${udOf(PLAN.meta.end)} · 共 ${PLAN.weeks.length} 周 · ${PLAN.meta.totalKm} km</div>
       </div>` + dayCard(d1, {preview:true}) + weekCard(d1) + footNote();
   }
@@ -541,7 +562,7 @@ function viewToday(){
   const day = dayByDate(m.t);
   if(!day) return head + `<div class="card">今天（${m.t}）不在计划范围内。</div>` + footNote();
   const pv = isPreview() ? `<div class="card tight" style="border-color:var(--accent-soft)">
-      <div class="row"><div class="sp" style="font-size:13.5px">正在预览 ${esc(m.t)}（W${day.week} ${esc(day.dowName)}）</div>
+      <div class="row"><div class="sp" style="font-size:13.5px">正在预览 ${esc(udOf(m.t))}（W${day.week} ${esc(day.dowName)}）</div>
       <button class="btn sm" data-act="exitPreview">回到今天</button></div></div>` : '';
   const ob = (S.seen && S.seen.onboard) ? '' : `<div class="card">
       <div class="row" style="margin-bottom:5px"><b>第一次用？三件事</b><div class="sp"></div>
@@ -609,7 +630,12 @@ function dayCard(day, opt){
   const v = verdict();
   const check = S.checks[day.date];
   const adjust = (v.k==='red') ? 'bad' : (v.k==='yellow' && (day.strength || day.type==='quality' || day.type==='test')) ? 'warn' : '';
-  const st = check ? (check.status==='done'?'<span class="badge ok">已完成</span>':check.status==='downgrade'?'<span class="badge warn">降级完成</span>':'<span class="badge">已跳过</span>') : '';
+  const st = !check ? ''
+    : check.status==='done' ? '<span class="badge ok">已完成</span>'
+    : check.status==='downgrade' ? '<span class="badge warn">降级完成</span>'
+    : check.status==='skip' ? '<span class="badge">已跳过</span>'
+    : check.status==='extra' ? '<span class="badge">额外</span>'
+    : '<span class="badge ok">力量已勾</span>';
   const t = day.type;
   const zoneLabel = t==='rest' ? '休息日' : (ZNAME[day.zone]||'训练');
   return `<div class="hero" style="--zc:${zc}">
@@ -644,7 +670,7 @@ function timelineCard(day){
     items.push(['20:20','睡觉准备 · 睡 ≥ 8 小时']);
   }else{
     if(st) items.push([addMin(st,-20),'等渗盐水洗鼻（出门前 20 分）']);
-    if(st) items.push([st,'开跑 · 前 10 分钟压慢至 6:30–6:50']);
+    if(st) items.push([st,'开跑 · 前 10 分钟压慢热身（心率 ≤' + eMaxHr() + ' 次/分）']);
     if(day.strength) items.push(['19:55','力量 '+day.strength+'（'+PLAN.strengths[day.strength].minutes+' 分钟）']);
     items.push(['20:20','必须结束全部训练']);
     items.push(['20:50','30 分内：补水 250ml + 碳水 30–40g + 蛋白 10–15g']);
@@ -721,9 +747,10 @@ function footNote(){
 
 /* ---------- 12 周 ---------- */
 function viewPlan(){
-  const done = Object.keys(S.checks).length;
+  const done = Object.values(S.checks).filter(c => c && c.status).length;
   const totalKm = PLAN.meta.totalKm;
-  const doneKm = DAYS.filter(d=>S.checks[d.date] && S.checks[d.date].status!=='skip').reduce((a,b)=>a+b.km,0);
+  /* 只有「完成 / 降级完成」才算计划里程；仅勾了力量的记录不进里程 */
+  const doneKm = DAYS.filter(d=>{ const c = S.checks[d.date]; return c && (c.status==='done' || c.status==='downgrade'); }).reduce((a,b)=>a+b.km,0);
   const pct = Math.min(100, doneKm/totalKm*100);
   return `<div class="top"><div><div class="d1">12 周课表</div>
       <div class="d2">${udOf(PLAN.meta.start)} → ${udOf(PLAN.meta.end)}${OFF ? ' · 已整体平移 ' + OFF + ' 天' : ''}</div></div></div>
@@ -742,7 +769,10 @@ function viewPlan(){
         <div class="days">
           ${days.map(d=>{
             const c = S.checks[d.date];
-            const mark = c ? (c.status==='skip'?'<div style="font-size:10.5px;color:var(--ink3)">跳过</div>':`<div class="done">✓</div>`) : '';
+            const mark = !c ? ''
+              : c.status==='skip' ? '<div style="font-size:10.5px;color:var(--ink3)">跳过</div>'
+              : (c.status==='done'||c.status==='downgrade'||c.status==='extra') ? '<div class="done">✓</div>'
+              : '<div style="font-size:10.5px;color:var(--ink3)">力</div>';
             return `<div class="dbtn ${d.type==='rest'?'off':''}" data-act="day" data-date="${d.date}">
               <div class="w">${udLabel(d.date)}</div>
               <div class="v">${d.km?f1(d.km)+'k':'休'}</div>
@@ -758,7 +788,7 @@ function viewPlan(){
 /* ---------- 记录 ---------- */
 function viewLog(){
   const rows = DAYS.filter(d => S.checks[d.date]).sort((a,b)=> a.date<b.date?1:-1);
-  const doneKm = rows.filter(r=>S.checks[r.date].status!=='skip').reduce((a,b)=>a+b.km,0);
+  const doneKm = rows.filter(r=>{ const c = S.checks[r.date]; return c.status==='done' || c.status==='downgrade'; }).reduce((a,b)=>a+b.km,0);
   const nDone = rows.filter(r=>S.checks[r.date].status==='done').length;
   const nDown = rows.filter(r=>S.checks[r.date].status==='downgrade').length;
   const nSkip = rows.filter(r=>S.checks[r.date].status==='skip').length;
@@ -769,7 +799,8 @@ function viewLog(){
     ${rows.length? rows.map(d=>{
       const c = S.checks[d.date];
       const badge = c.status==='done'?'ok':c.status==='downgrade'?'warn':'';
-      const label = c.status==='done'?'完成':c.status==='downgrade'?'降级完成':c.status==='extra'?'额外':'跳过';
+      const label = c.status==='done'?'完成':c.status==='downgrade'?'降级完成'
+        :c.status==='extra'?'额外':c.status==='skip'?'跳过':'仅力量';
       return `<div class="card tight" data-act="day" data-date="${d.date}">
         <div class="row"><div class="dot" style="background:${zoneColor(d.zone)}"></div>
           <div class="sp"><div class="nm">${esc(d.title)}</div>
@@ -804,7 +835,7 @@ function viewSet(){
         <button class="btn sm" data-act="saveStart">保存</button></div>
       <div class="tiny" style="margin-top:8px">计划区间：${udOf(PLAN.meta.start)} → ${udOf(PLAN.meta.end)}${OFF ? '（已平移 '+OFF+' 天）' : '（与原课表一致）'}</div>
       ${(function(){
-        const n = diffDays(PLAN.meta.start, curDate()) + 1;
+        const n = diffDays(PLAN.meta.start, planToday()) + 1;
         if(n < 1) return `<div class="tiny" style="margin-top:4px">还没开跑：距第 1 天还有 ${1-n} 天</div>`;
         if(n > DAYS.length) return `<div class="tiny" style="margin-top:4px;color:var(--warn)">这一轮已经走完（共 ${DAYS.length} 天），把第 1 天改到新的日期可以开始下一轮</div>`;
         return `<div class="tiny" style="margin-top:4px">今天是这一轮的第 ${n} / ${DAYS.length} 天</div>`;
@@ -1498,7 +1529,7 @@ document.addEventListener('click', async (e)=>{
     return;
   }
   const act = btn.dataset.act;
-  const t = curDate();
+  const t = planToday();
 
   if(act==='tab'){ S.tab = btn.dataset.tab; save(); render(); return; }
   if(act==='exitPreview'){ location.search = ''; return; }
@@ -1521,7 +1552,10 @@ document.addEventListener('click', async (e)=>{
     recomputeOff();
     save();
     if(snapped !== v){
-      alert('「' + v + '」是训练日，已顺延到最近的周一：' + snapped + '\n\n这样你有完整的一周，不会被直接推上质量课。');
+      const msg = snapped > v
+        ? '「' + v + '」是训练日，已顺延到下一个周一：' + snapped + '\n\n这样你有完整的一周，不会一上手就被推上质量课。'
+        : '「' + v + '」是休息日（周三/周五），已对齐到本周一：' + snapped + '\n\n当天本来就该休息，下一个训练日按正常节奏开跑。';
+      alert(msg);
     }
     render(); return;
   }
@@ -1579,13 +1613,17 @@ document.addEventListener('click', async (e)=>{
 
 
   if(act==='gate'){
+    // S.daily 一律用【真实日期】：verdict()/gateCard() 就是这么读的。
+    // 用 t（课表日期）写进去，平移过课表后读的地方就永远读不到 —— 这个坑是外部审查抓到的。
+    const dt = todayISO();
     const hrv = parseFloat(document.getElementById('inHrv').value);
     const rhr = parseFloat(document.getElementById('inRhr').value);
-    S.daily[t] = Object.assign({}, S.daily[t], {hrv:isNaN(hrv)?null:hrv, rhr:isNaN(rhr)?null:rhr});
+    S.daily[dt] = Object.assign({}, S.daily[dt], {hrv:isNaN(hrv)?null:hrv, rhr:isNaN(rhr)?null:rhr});
     save(); render(); return;
   }
   if(act==='pain'){
-    S.daily[t] = Object.assign({}, S.daily[t], {pain: !(S.daily[t]&&S.daily[t].pain)});
+    const dt = todayISO();
+    S.daily[dt] = Object.assign({}, S.daily[dt], {pain: !(S.daily[dt]&&S.daily[dt].pain)});
     save(); render(); return;
   }
   if(act==='wx'){
@@ -1682,7 +1720,7 @@ document.addEventListener('click', async (e)=>{
           const j = JSON.parse(rd.result);
           if(j && j.state){
             if(j.profile && j.profile !== WHO && !confirm('这份备份属于「'+(j.profileTitle||j.profile)+'」，\n当前档案是「'+(PLAN.meta.title||WHO)+'」。\n\n导入会覆盖当前档案的记录，继续？')) return;
-            S = Object.assign(freshState(), j.state);
+            S = normalizeState(j.state);
             save(); render(); alert('已导入 '+Object.keys(S.checks||{}).length+' 条打卡');
           }
           else alert('文件里没有 state 字段');
