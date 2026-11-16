@@ -1,15 +1,46 @@
 {
  "name": "12周跑步 · 今日课表",
  "short_name": "12周跑步",
+ "description": "12 周 / 84 天跑步课表：今天跑什么、配速多少、心率压在哪，一屏看完。数据只存本机。",
+ "lang": "zh-CN",
+ "dir": "ltr",
  "start_url": "./index.html",
+ "scope": "./",
  "display": "standalone",
- "background_color": "#0b0e14",
- "theme_color": "#0b0e14",
+ "display_override": [
+  "standalone",
+  "minimal-ui"
+ ],
+ "background_color": "#faf9f5",
+ "theme_color": "#faf9f5",
  "orientation": "portrait",
+ "categories": [
+  "health",
+  "fitness",
+  "sports"
+ ],
  "icons": [
   {
-   "src": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxOTIgMTkyIj48cmVjdCB3aWR0aD0iMTkyIiBoZWlnaHQ9IjE5MiIgcng9IjQyIiBmaWxsPSIjMGIwZTE0Ii8+PHRleHQgeD0iOTYiIHk9IjEyNiIgZm9udC1zaXplPSI5NiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZmlsbD0iIzM0ZDM5OSIgZm9udC1mYW1pbHk9InN5c3RlbS11aSI+6LeRPC90ZXh0Pjwvc3ZnPg==",
+   "src": "icon-192.png",
    "sizes": "192x192",
+   "type": "image/png",
+   "purpose": "any"
+  },
+  {
+   "src": "icon-512.png",
+   "sizes": "512x512",
+   "type": "image/png",
+   "purpose": "any"
+  },
+  {
+   "src": "icon-maskable-512.png",
+   "sizes": "512x512",
+   "type": "image/png",
+   "purpose": "maskable"
+  },
+  {
+   "src": "icon.svg",
+   "sizes": "any",
    "type": "image/svg+xml",
    "purpose": "any"
   }
