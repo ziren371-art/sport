@@ -370,16 +370,23 @@ function verdict(){
   const hrv = m.hrv, rhr = m.rhr;
   const base = S.hrvBase || 97;
   const rB = S.rhrBase || 55;
-  /* 按压痛排在「未填写」之前：没戴 HRV 设备的人勾了按压痛，也必须立刻看到红灯。 */
+  const hasHrv = hrv != null && hrv !== '' && !isNaN(hrv);
+  const hasRhr = rhr != null && rhr !== '' && !isNaN(rhr) && rhr > 0;
+  /* 按压痛排第一：没戴 HRV 设备的人勾了按压痛，也必须立刻看到红灯。 */
   if(m.pain) return {k:'red', label:'红灯 · 停跑 48 小时', cls:'bad',
     tip:'出现膝盖/胫骨/跟腱按压痛 → 零跑步、零力量，休息 48 小时后再评估'};
-  if(hrv==null || hrv==='') return {k:null, label:'未填写', tip:'填今天的 HRV 与静息心率，自动判断能不能照常跑', cls:'muted'};
-  const r = hrv / base;
-  if(r <= 0.804 || (rhr && rhr >= rB+10)) return {k:'red', label:'红灯 · 停跑 48 小时', cls:'bad',
-    tip:'HRV 低于基线 1.5 个标准差，或静息心率比你的基线（'+rB+'）高 10 次以上 → 停跑休息 48 小时'};
-  if(r < 0.845 || (rhr && rhr >= rB+5)) return {k:'yellow', label:'黄灯 · 降级保护', cls:'warn',
+  /* 只有两项【都空】才算未填写。只填静息心率也要能判灯 ——
+     不戴 HRV 手表的人只量静息心率，静息 76 却显示"未填写"等于白填。 */
+  if(!hasHrv && !hasRhr) return {k:null, label:'未填写', cls:'muted',
+    tip:'填 HRV 或静息心率任意一项就能判断（两项都填更准）'};
+  const r = hasHrv ? (hrv / base) : 1;
+  if((hasHrv && r <= 0.804) || (hasRhr && rhr >= rB+10)) return {k:'red', label:'红灯 · 停跑 48 小时', cls:'bad',
+    tip:hasHrv
+      ? 'HRV 低于基线 1.5 个标准差，或静息心率比你的基线（'+rB+'）高 10 次以上 → 停跑休息 48 小时'
+      : '静息心率 ' + rhr + ' 比你的基线（' + rB + '）高 10 次以上 → 停跑休息 48 小时'};
+  if((hasHrv && r < 0.845) || (hasRhr && rhr >= rB+5)) return {k:'yellow', label:'黄灯 · 降级保护', cls:'warn',
     tip:'质量课降级为 E 区轻松跑（心率 ≤'+eMaxHr()+'），取消附加力量训练'};
-  if(!rhr || rhr <= rB+3) return {k:'green', label:'绿灯 · 照常跑', cls:'ok', tip:'身体恢复良好，严格按今天的课表执行'};
+  if(!hasRhr || rhr <= rB+3) return {k:'green', label:'绿灯 · 照常跑', cls:'ok', tip:'身体恢复良好，严格按今天的课表执行'};
   return {k:'yellow', label:'黄灯 · 留意静息心率', cls:'warn', tip:'静息心率比基线（'+rB+'）高 3 次以上，今晚压住强度、取消力量'};
 }
 
