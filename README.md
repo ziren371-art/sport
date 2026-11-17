@@ -6,6 +6,14 @@
 
 ## 更新记录
 
+- **2026-11-17 · 修「点上传训练数据没反应」**
+  - 两个上传入口都用了 iOS Safari / 微信内置浏览器**会静默忽略**的写法：跑步记录是 `display:none` 的 `<input>` 再靠 JS `.click()`；备份导入更严重——`createElement('input')` 之后**从未插入 DOM** 就点击，iOS 一定不弹选择器
+  - 改用原生 `<label for="...">`：点 label 由浏览器自己激活 input，完全不依赖 JS。input 用 `.sr-only`（屏幕外定位）而不是 `display:none`，保持"可渲染"
+  - 导出用的 `<a>` 也改成先 `appendChild` 再点击（iOS 上游离 anchor 的 `download` 常被忽略）
+  - `.btn` 加 `display:inline-flex`，label 套上后外观与 button 一致
+  - 浏览器内实测：点 label 后文件框收到 1 次 click 事件
+  - 测试 184 → **191 项**
+
 - **2026-11-16 · 修「设置城市后取天气一直卡住」**
   - 实测 `api.open-meteo.com` 在这条网络上会**间歇性整段卡死**（同一地址一次 20 秒超时、一次 0.87 秒返回）。原代码 `fetch` 没有任何超时，`Promise.all` 会一直等，按钮就永远停在「取天气…」
   - 所有天气请求加 **8 秒超时（AbortController）+ 重试 1 次**；天气与空气质量拆开取，AQI 失败不再连累天气
@@ -252,7 +260,7 @@ python scripts\import_runs.py
     runs_lib.py            TCX/GPX/FIT 解析与区间判定
     import_runs.py         导入跑步记录 → 周报 / 月报 / 达标判定
     test_runs.py / test_formats.py / test_interval.py / stress_test.py
-    test.mjs               184 项自动测试（日期/闸门/天气/渲染/休息日/存储降级/PWA/双档案/平移/按基线判灯/损坏存储）
+    test.mjs               191 项自动测试（日期/闸门/天气/渲染/休息日/存储降级/PWA/双档案/平移/按基线判灯/损坏存储）
   源码分段/                  源码的分片文本（给收不了文件、只能收粘贴的工具用）
   _reference/               朋友课表原始 HTML（Argon 生成的那份，数据已抽取进 src）
   截图/                     界面截图
@@ -342,7 +350,7 @@ python scripts\make_docs.py          # 交接文档 + 开发过程说明
 ## 验证状态
 
 - ✅ 课表数据：`check_plan.py` 校验两份课表结构与数字自洽（我 250.5 km / 朋友 183.0 km）
-- ✅ 自动测试：`test.mjs` **184 项**（含休息日不打卡、存储降级、PWA 引用完整性）+ Python 侧 `test_runs` / `test_formats` / `test_interval` / `stress_test`（32 项）全部通过
+- ✅ 自动测试：`test.mjs` **191 项**（含休息日不打卡、存储降级、PWA 引用完整性）+ Python 侧 `test_runs` / `test_formats` / `test_interval` / `stress_test`（32 项）全部通过
 - ✅ 界面：无头 Chrome 实拍 13 个界面状态，检查过 5 个页签与中段滚动
 - ⚠️ 天气接口：开发环境无外网，**未能对 Open-Meteo 做真机联网验证**；代码里请求失败会显示"取天气失败"，课表与打卡完全不受影响。第一次在手机上打开时请确认城市（会自动推断）并点一次刷新。
 - ⚠️ PWA 安装：只能在真实 https 环境验收（本地 file:// 不注册 Service Worker）。装好后用设置页「环境自检 → 已装到桌面」确认。
