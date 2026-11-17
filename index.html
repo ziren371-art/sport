@@ -43,7 +43,7 @@ h1,h2,h3{margin:0;font-weight:600;font-family:var(--serif);letter-spacing:-.01em
 .chip{display:inline-flex;align-items:center;gap:5px;background:var(--surface2);
   border:1px solid var(--line2);border-radius:99px;padding:5px 11px;font-size:12.5px;color:var(--ink2)}
 .chip b{color:var(--ink);font-weight:600}
-.btn{white-space:nowrap;flex:0 0 auto;appearance:none;border:1px solid var(--line);
+.btn{white-space:nowrap;flex:0 0 auto;appearance:none;display:inline-flex;align-items:center;justify-content:center;border:1px solid var(--line);
   background:var(--surface);color:var(--ink);border-radius:10px;padding:10px 15px;
   font-size:14px;font-weight:500;font-family:var(--sans);cursor:pointer;transition:background .15s,border-color .15s}
 .btn:active{transform:translateY(.5px)}
@@ -152,6 +152,9 @@ ul.tips li{margin:4px 0}
   color:var(--ink2);font-size:12.5px;font-weight:500;font-family:var(--sans)}
 .feel button.on{background:var(--accent);color:#fff;border-color:var(--accent)}
 .hide{display:none!important}
+/* 屏幕外定位：文件选择框必须保持「可渲染」，用 display:none 时
+   iOS Safari / 微信内置浏览器不会弹出选择器 */
+.sr-only{position:fixed;left:-9999px;top:0;width:1px;height:1px;opacity:0;pointer-events:none}
 .seg{display:flex;background:var(--surface2);border:1px solid var(--line2);border-radius:11px;padding:3px;gap:3px}
 .seg button{flex:1;border:0;background:none;color:var(--ink2);padding:9px 6px;border-radius:8px;
   font-size:13px;font-weight:500;font-family:var(--sans)}
@@ -968,10 +971,11 @@ function viewSet(){
       <div class="tiny" style="margin:2px 0 8px">导出后丢进电脑的 <b>跑步数据\导入\</b>，周报就会把力量完成情况算进达标项</div>
       <div class="row" style="gap:7px">
         <button class="btn sm" data-act="export">导出 JSON</button>
-        <button class="btn sm" data-act="import">导入</button>
+        <label class="btn sm" for="fileBak">导入</label>
         <div class="sp"></div>
         <button class="btn sm ghost" data-act="reset">清空打卡</button>
       </div>
+      <input type="file" id="fileBak" accept="application/json,.json" class="sr-only">
     </div>
     <div class="card">
       <b>环境自检</b>
@@ -1462,9 +1466,9 @@ function viewData(){
   const importer = `<div class="card">
     <div class="row"><div class="sp"><b>导入跑步记录</b>
       <div class="tiny" style="margin-top:3px">Zepp：运动记录 → 某次跑步 → 分享 → 导出 → TCX</div></div>
-      <button class="btn sm primary" data-act="importRuns">选择文件</button></div>
+      <label class="btn sm primary" for="fileRuns">选择文件</label></div>
     <div class="tiny" style="margin-top:8px">支持 .tcx / .gpx / .fit，可一次多选；按日期+距离自动去重</div>
-    <input type="file" id="fileRuns" accept=".tcx,.gpx,.fit,.xml" multiple class="hide">
+    <input type="file" id="fileRuns" accept=".tcx,.gpx,.fit,.xml" multiple class="sr-only">
   </div>`;
 
   if(!runs.length){
@@ -1681,8 +1685,9 @@ document.addEventListener('click', async (e)=>{
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
     a.download = '跑步数据-'+todayISO()+'.md';
-    a.click();
-    setTimeout(()=>URL.revokeObjectURL(a.href), 4000);
+    a.style.display = 'none';
+    document.body.appendChild(a); a.click();
+    setTimeout(function(){ a.remove(); URL.revokeObjectURL(a.href); }, 4000);
     return;
   }
   if(act==='clearRuns'){
@@ -1790,30 +1795,14 @@ document.addEventListener('click', async (e)=>{
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
     a.download = '跑步打卡备份-' + (WHO||'未知') + '-' + todayISO() + '.json';
-    a.click();
-    setTimeout(()=>URL.revokeObjectURL(a.href), 4000);
+    a.style.display = 'none';
+    document.body.appendChild(a); a.click();
+    setTimeout(function(){ a.remove(); URL.revokeObjectURL(a.href); }, 4000);
     return;
   }
   if(act==='import'){
-    const inp = document.createElement('input');
-    inp.type = 'file'; inp.accept = 'application/json';
-    inp.onchange = () => {
-      const f = inp.files[0]; if(!f) return;
-      const rd = new FileReader();
-      rd.onload = () => {
-        try{
-          const j = JSON.parse(rd.result);
-          if(j && j.state){
-            if(j.profile && j.profile !== WHO && !confirm('这份备份属于「'+(j.profileTitle||j.profile)+'」，\n当前档案是「'+(PLAN.meta.title||WHO)+'」。\n\n导入会覆盖当前档案的记录，继续？')) return;
-            S = normalizeState(j.state);
-            save(); render(); alert('已导入 '+Object.keys(S.checks||{}).length+' 条打卡');
-          }
-          else alert('文件里没有 state 字段');
-        }catch(err){ alert('文件解析失败'); }
-      };
-      rd.readAsText(f);
-    };
-    inp.click();
+    const el = document.getElementById('fileBak');
+    if(el){ el.value = ''; el.click(); }
     return;
   }
   if(act==='reset'){
@@ -1835,6 +1824,25 @@ async function maybeWeather(){
 const __tab = Q.get('tab');
 
 document.addEventListener('change', async (e)=>{
+  if(e.target && e.target.id==='fileBak'){
+    const f = (e.target.files && e.target.files[0]) || null;
+    e.target.value = '';
+    if(!f) return;
+    const rd = new FileReader();
+    rd.onload = () => {
+      try{
+        const j = JSON.parse(rd.result);
+        if(j && j.state){
+          if(j.profile && j.profile !== WHO && !confirm('这份备份属于「'+(j.profileTitle||j.profile)+'」，\n当前档案是「'+(PLAN.meta.title||WHO)+'」。\n\n导入会覆盖当前档案的记录，继续？')) return;
+          S = normalizeState(j.state);
+          save(); render(); alert('已导入 '+Object.keys(S.checks||{}).length+' 条打卡');
+        }
+        else alert('文件里没有 state 字段');
+      }catch(err){ alert('文件解析失败'); }
+    };
+    rd.readAsText(f);
+    return;
+  }
   if(e.target && e.target.id==='fileRuns'){
     const files = [...e.target.files];
     if(!files.length) return;
